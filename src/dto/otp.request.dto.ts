@@ -10,5 +10,9 @@ export class OTPRequestDTO {
   @IsNotEmpty()
   mobile: string;
 
+  @IsString()
+  @IsNotEmpty()
+  name: string;
+
 }
 
