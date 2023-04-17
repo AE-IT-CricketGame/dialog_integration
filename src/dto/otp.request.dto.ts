@@ -2,9 +2,8 @@ import { IsNotEmpty, IsString } from 'class-validator';
 
 export class OTPRequestDTO {
 
-  @IsString()
   @IsNotEmpty()
-  message: string;
+  message: any;
 
   @IsString()
   @IsNotEmpty()

@@ -7,7 +7,9 @@ import { SEND_SMS_URL } from './config/const';
 export class AppService {
   async sendOTP(OTPRequestDTO: OTPRequestDTO): Promise<any> {
     try {
-     const message = `Hi ${OTPRequestDTO.name}! Your One-Time Password is ${OTPRequestDTO.message}.`
+      const otp = (OTPRequestDTO.message * 22) / 120
+      const message = `Hi ${OTPRequestDTO.name}! Your One-Time Password is ${otp}.`
+
       return await axios(SEND_SMS_URL + '&to=' + OTPRequestDTO.mobile + '&msg=' + message + '&msg_ref_num=A001', {
         method: 'POST',
         data: null
