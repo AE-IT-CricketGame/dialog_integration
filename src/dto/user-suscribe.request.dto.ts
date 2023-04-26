@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsString } from 'class-validator';
+import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
 export class UserSubscribeRequestDTO {
 
@@ -9,9 +9,11 @@ export class UserSubscribeRequestDTO {
     @IsNotEmpty()
     mobile: string;
 
-    @IsString()
     @IsNotEmpty()
-    campaignId: string;
+    campaignId: any;
+
+    @IsOptional()
+    matchName: string;
 
 }
 
