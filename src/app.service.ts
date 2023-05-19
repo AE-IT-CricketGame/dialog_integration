@@ -63,6 +63,24 @@ export class AppService {
                 transactionOperationStatus: 'Charged',
               },
             },
+          }).catch(async (e) => {
+            if (
+              e?.response?.data?.fault?.code == 'POL0001' ||
+              e?.response?.data?.requestError?.policyException?.messageId ==
+                'POL1000' ||
+              e?.response?.data?.requestError?.policyException?.messageId ==
+                'SVC0270'
+            ) {
+              const dto: UserSubscribeRequestDTO = {
+                mobile: element.attributes.mobile,
+                userId: element.id,
+                campaignId: element.attributes.campaign.data.id,
+                matchName:
+                  element.attributes.campaign.data.attributes.campaign_name,
+              };
+              console.log(dto)
+              //await this.unsubscribe(dto);
+            }
           });
         });
       }
@@ -121,9 +139,7 @@ export class AppService {
           },
           data: {
             amountTransaction: {
-              clientCorrelator: `${mobileGenerator(
-                dto.mobile,
-              )}-${Date.now()}`,
+              clientCorrelator: `${mobileGenerator(dto.mobile)}-${Date.now()}`,
               endUserId: `tel:${mobileGenerator(dto.mobile)}`,
               paymentAmount: {
                 chargingInformation: {
