@@ -3,6 +3,7 @@ import { AppService } from './app.service';
 import { OTPRequestDTO } from './dto/otp.request.dto';
 import { ResponseDTO } from './dto/response.dto';
 import { UserSubscribeRequestDTO } from './dto/user-suscribe.request.dto';
+import { MobileDTO } from './dto/mobile.request.dto';
 
 @Controller('config')
 export class AppController {
@@ -36,7 +37,20 @@ export class AppController {
 
   @Post('/unsubscribe')
   async unsubscribeUser(@Body() userSubscribeRequestDTO: UserSubscribeRequestDTO): Promise<ResponseDTO> {
-   const response = await this.appService.subscribe(userSubscribeRequestDTO);
+   const response = await this.appService.unsubscribe(userSubscribeRequestDTO);
+
+   
+    return new ResponseDTO(
+      HttpStatus.OK,
+      "Success",
+      `User unsubscribe from campaign Successfully`,
+      response.data ? response.data : response,
+    );
+  }
+
+  @Post('/unsubscribe-app')
+  async unsubscribeUserApp(@Body() userSubscribeRequestDTO: MobileDTO): Promise<ResponseDTO> {
+   const response = await this.appService.unsubscribeFullUser(userSubscribeRequestDTO);
 
    
     return new ResponseDTO(
