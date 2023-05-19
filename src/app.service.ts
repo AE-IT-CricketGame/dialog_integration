@@ -79,7 +79,7 @@ export class AppService {
                   element.attributes.campaign.data.attributes.campaign_name,
               };
               console.log(dto)
-              //await this.unsubscribe(dto);
+              await this.unsubscribe(dto);
             }
           });
         });
@@ -115,21 +115,21 @@ export class AppService {
 
   async subscribe(dto: UserSubscribeRequestDTO): Promise<any> {
     try {
-      const response = await axios(SUBSCRIBE_USER_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Accept: 'application/json',
-          Authorization: AUTH_TOKEN,
-        },
-        data: {
-          method: 'WEB',
-          msisdn: `tel:${mobileGenerator(dto.mobile)}`,
-          serviceID: dto.campaignId,
-        },
-      });
+      // const response = await axios(SUBSCRIBE_USER_URL, {
+      //   method: 'POST',
+      //   headers: {
+      //     'Content-Type': 'application/json',
+      //     Accept: 'application/json',
+      //     Authorization: AUTH_TOKEN,
+      //   },
+      //   data: {
+      //     method: 'WEB',
+      //     msisdn: `tel:${mobileGenerator(dto.mobile)}`,
+      //     serviceID: dto.campaignId,
+      //   },
+      // });
 
-      if (response.data.status == 'SUBSCRIBED') {
+      // if (response.data.status == 'SUBSCRIBED') {
         await axios(getPaymentURL(dto.mobile), {
           method: 'POST',
           headers: {
@@ -159,10 +159,20 @@ export class AppService {
               transactionOperationStatus: 'Charged',
             },
           },
-        });
-      }
+        }).catch(async (e) => {
+          if (
+            e?.response?.data?.fault?.code == 'POL0001' ||
+            e?.response?.data?.requestError?.policyException?.messageId ==
+              'POL1000' ||
+            e?.response?.data?.requestError?.policyException?.messageId ==
+              'SVC0270'
+          ) {
+            await this.unsubscribe(dto);
+          }
+        });;
+      
 
-      return response;
+      return "Succefully Subscribed";
     } catch (e) {
       throw e;
     }
