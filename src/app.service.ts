@@ -20,7 +20,6 @@ import { MobileDTO } from './dto/mobile.request.dto';
 
 @Injectable()
 export class AppService {
-
   @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
   async triggerPayments() {
     try {
@@ -80,7 +79,7 @@ export class AppService {
                 matchName:
                   element.attributes.campaign.data.attributes.campaign_name,
               };
-              console.log(dto)
+              console.log(dto);
               await this.unsubscribe(dto);
             }
           });
@@ -132,49 +131,55 @@ export class AppService {
       // });
 
       // if (response.data.status == 'SUBSCRIBED') {
-        await axios(getPaymentURL(dto.mobile), {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Accept: 'application/json',
-            Authorization: AUTH_TOKEN,
-          },
-          data: {
-            amountTransaction: {
-              clientCorrelator: `${mobileGenerator(dto.mobile)}-${Date.now()}`,
-              endUserId: `tel:${mobileGenerator(dto.mobile)}`,
-              paymentAmount: {
-                chargingInformation: {
-                  amount: CHARGE_AMOUNT,
-                  currency: 'LKR',
-                  description: `My CrickQ (${dto.matchName}).`,
-                },
-                chargingMetaData: {
-                  onBehalfOf: 'My CrickQ',
-                  purchaseCategoryCode: 'Service',
-                  channel: 'WAP',
-                  taxAmount: '0',
-                  serviceID: SERVICE_ID,
-                },
+      await axios(getPaymentURL(dto.mobile), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+          Authorization: AUTH_TOKEN,
+        },
+        data: {
+          amountTransaction: {
+            clientCorrelator: `${mobileGenerator(dto.mobile)}-${Date.now()}`,
+            endUserId: `tel:${mobileGenerator(dto.mobile)}`,
+            paymentAmount: {
+              chargingInformation: {
+                amount: CHARGE_AMOUNT,
+                currency: 'LKR',
+                description: `My CrickQ (${dto.matchName}).`,
               },
-              referenceCode: `REF-${Date.now()}`,
-              transactionOperationStatus: 'Charged',
+              chargingMetaData: {
+                onBehalfOf: 'My CrickQ',
+                purchaseCategoryCode: 'Service',
+                channel: 'WAP',
+                taxAmount: '0',
+                serviceID: SERVICE_ID,
+              },
             },
+            referenceCode: `REF-${Date.now()}`,
+            transactionOperationStatus: 'Charged',
           },
-        }).catch(async (e) => {
-          if (
-            e?.response?.data?.fault?.code == 'POL0001' ||
-            e?.response?.data?.requestError?.policyException?.messageId ==
-              'POL1000' ||
-            e?.response?.data?.requestError?.policyException?.messageId ==
-              'SVC0270'
-          ) {
-            await this.unsubscribe(dto);
+        },
+      }).catch(async (e) => {
+        if (
+          e?.response?.data?.requestError?.policyException?.messageId ==
+            'POL1000' ||
+          e?.response?.data?.requestError?.policyException?.messageId ==
+            'SVC0270' ||
+          e?.response?.data?.requestError?.policyException?.messageId ==
+            'POL1001'
+        ) {
+          await this.unsubscribe(dto);
+        } else if (e?.response?.data?.fault?.code == 'POL0001') {
+          const mobileDTO : MobileDTO = {
+            mobile: dto.mobile
           }
-        });;
-      
 
-      return "Succefully Subscribed";
+          await this.unsubscribeFullUser(mobileDTO);
+        }
+      });
+
+      return 'Succefully Subscribed';
     } catch (e) {
       throw e;
     }
@@ -182,7 +187,7 @@ export class AppService {
 
   async unsubscribeFullUser(dto: MobileDTO): Promise<any> {
     try {
-      console.log(dto)
+      console.log(dto);
       const response = await axios(UNSUBSCRIBE_USER_URL, {
         method: 'POST',
         headers: {
@@ -197,14 +202,17 @@ export class AppService {
         },
       });
 
-      if (response?.data?.data?.subscribeResponse?.status == 'UNSUBSCRIBED' || response.data?.data?.subscribeResponse?.status == 'NOT_SUBSCRIBED') {
+      if (
+        response?.data?.data?.subscribeResponse?.status == 'UNSUBSCRIBED' ||
+        response.data?.data?.subscribeResponse?.status == 'NOT_SUBSCRIBED'
+      ) {
         await axios(DELETE_USER_DATA_FROM_ALL + dto.mobile, {
-          method: 'POST'
+          method: 'POST',
         });
       }
     } catch (e) {
-      if(e.response.data.message) {
-        return e.response.data.message
+      if (e.response.data.message) {
+        return e.response.data.message;
       }
       throw e;
     }
