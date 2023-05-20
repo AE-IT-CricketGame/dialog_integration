@@ -197,7 +197,6 @@ export class AppService {
       });
 
       if (response?.data?.data?.subscribeResponse?.status == 'UNSUBSCRIBED' || response.data?.data?.subscribeResponse?.status == 'NOT_SUBSCRIBED') {
-        console.log(DELETE_USER_DATA_FROM_ALL + dto.mobile)
         await axios(DELETE_USER_DATA_FROM_ALL + dto.mobile, {
           method: 'POST'
         });
