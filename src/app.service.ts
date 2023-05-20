@@ -181,6 +181,7 @@ export class AppService {
 
   async unsubscribeFullUser(dto: MobileDTO): Promise<any> {
     try {
+      console.log(dto)
       const response = await axios(UNSUBSCRIBE_USER_URL, {
         method: 'POST',
         headers: {
@@ -195,7 +196,9 @@ export class AppService {
         },
       });
 
-      if (response.data.subscribeResponse.status == 'UNSUBSCRIBED') {
+      console.log(response.data)
+
+      if (response?.data?.data?.subscribeResponse?.status == 'UNSUBSCRIBED' || response.data?.data?.subscribeResponse?.status == 'NOT_SUBSCRIBED') {
         await axios(DELETE_USER_DATA_FROM_ALL + dto.mobile, {
           method: 'POST',
           headers: {
