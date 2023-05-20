@@ -20,6 +20,7 @@ import { MobileDTO } from './dto/mobile.request.dto';
 
 @Injectable()
 export class AppService {
+
   @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
   async triggerPayments() {
     try {
