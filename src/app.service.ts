@@ -5,6 +5,7 @@ import {
   AUTH_TOKEN,
   CHARGE_AMOUNT,
   DELETE_USER_DATA,
+  DELETE_USER_DATA_FROM_ALL,
   GET_USER_DATA,
   SEND_SMS_URL,
   SERVICE_ID,
@@ -195,8 +196,8 @@ export class AppService {
       });
 
       if (response.data.subscribeResponse.status == 'UNSUBSCRIBED') {
-        await axios(DELETE_USER_DATA + dto.mobile, {
-          method: 'DELETE',
+        await axios(DELETE_USER_DATA_FROM_ALL + dto.mobile, {
+          method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             Accept: 'application/json',

@@ -11,6 +11,7 @@ const SMS_CREDENTIALS = {
 export const AUTH_TOKEN = "Bearer 266cd29a-4383-3ecd-915e-011a19843f0c"
 export const SEND_SMS_URL = SMS_API + '?username=' + SMS_CREDENTIALS.USERNAME + '&password=' + SMS_CREDENTIALS.PASSWORD + '&from=' + SMS_CREDENTIALS.FROM
 export const DELETE_USER_DATA = MAIN_API + "leaderboards/"
+export const DELETE_USER_DATA_FROM_ALL = MAIN_API + "question/delete/"
 export const GET_USER_DATA = MAIN_API + "leaderboards?populate=campaign"
 export const SUBSCRIBE_USER_URL = "https://ideabiz.lk/apicall/subscription/v3/subscribe"
 export const UNSUBSCRIBE_USER_URL = "https://ideabiz.lk/apicall/subscription/v3/unsubscribe"
