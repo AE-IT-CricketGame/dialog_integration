@@ -21,7 +21,7 @@ import { MobileDTO } from './dto/mobile.request.dto';
 
 @Injectable()
 export class AppService {
-  @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
+  @Cron(CronExpression.EVERY_DAY_AT_7PM)
   async triggerPayments() {
     try {
       const response = await axios(GET_USER_DATA, {
@@ -97,7 +97,7 @@ export class AppService {
     return [...new Set(csvDataArr)];
   }
 
-  @Cron(CronExpression.EVERY_DAY_AT_6PM)
+  @Cron(CronExpression.EVERY_DAY_AT_1PM)
   async sendReminder() {
     const response = await axios(GET_USER_DATA, {
       method: 'GET',
