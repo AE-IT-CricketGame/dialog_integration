@@ -9,12 +9,13 @@ import {
   GET_USER_DATA,
   SEND_SMS_URL,
   SERVICE_ID,
+  SMS_REMINDERS,
   SUBSCRIBE_USER_URL,
   UNSUBSCRIBE_USER_URL,
   getPaymentURL,
 } from './config/const';
 import { UserSubscribeRequestDTO } from './dto/user-suscribe.request.dto';
-import { generateNumber, mobileGenerator } from './config/common';
+import { generateNumber, mobileGenerator, mobileGeneratorWithOutPlus } from './config/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { MobileDTO } from './dto/mobile.request.dto';
 
@@ -90,6 +91,48 @@ export class AppService {
     } catch (e) {
       console.log(e);
     }
+  }
+
+  async _checkDuplicateNumber(csvDataArr) {
+    return [...new Set(csvDataArr)];
+  }
+
+  @Cron(CronExpression.EVERY_DAY_AT_6PM)
+  async sendReminder() {
+    const response = await axios(GET_USER_DATA, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      },
+    });
+    const users = response.data.data;
+ 
+    if(users) {
+      const mobileNumbers = users.map((user: any) => {
+        return user.attributes.mobile
+      })
+
+      const message = SMS_REMINDERS[Math.floor(Math.random() * SMS_REMINDERS.length)];
+      const uniqueMobileNumbers = await this._checkDuplicateNumber(mobileNumbers)
+
+      uniqueMobileNumbers.forEach(async (mobileNumber: any) => {
+        await axios(
+          SEND_SMS_URL +
+            '&to=' +
+            mobileGeneratorWithOutPlus(mobileNumber) +
+            '&msg=' +
+            message +
+            `&msg_ref_num=SMS_REF_${Date.now()}`,
+          {
+            method: 'POST',
+            data: null,
+          },
+        );
+      })
+      console.log("REMINDER USER COUNT: ", uniqueMobileNumbers.length)
+    }
+
   }
 
   async sendOTP(OTPRequestDTO: OTPRequestDTO): Promise<any> {

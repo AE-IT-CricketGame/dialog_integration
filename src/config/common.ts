@@ -2,6 +2,10 @@ export const mobileGenerator = (mobile: string) => {
     return `+94${mobile.substring(1)}`
 }
 
+export const mobileGeneratorWithOutPlus = (mobile: string) => {
+    return `94${mobile.substring(1)}`
+}
+
 export const generateNumber = (length) => {
     const digits = '0123456789';
     let NumberText = '';
