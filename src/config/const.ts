@@ -18,7 +18,7 @@ export const GET_USER_DATA = MAIN_API + "leaderboards?populate=campaign"
 export const SUBSCRIBE_USER_URL = process.env.IDEABIZ_SUBSCRIBE_USER_URL
 export const UNSUBSCRIBE_USER_URL = process.env.IDEABIZ_UNSUBSCRIBE_USER_URL
 export const SERVICE_ID = process.env.IDEABIZ_SERVICE_ID
-export const CHARGE_AMOUNT = 1
+export const CHARGE_AMOUNT = 6
 
 export const getPaymentURL = (mobile: string) => {
     return `${process.env.IDEABIZ_PAYMENT_URL}tel:${mobileGenerator(mobile)}/transactions/amount`

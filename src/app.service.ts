@@ -15,7 +15,11 @@ import {
   getPaymentURL,
 } from './config/const';
 import { UserSubscribeRequestDTO } from './dto/user-suscribe.request.dto';
-import { generateNumber, mobileGenerator, mobileGeneratorWithOutPlus } from './config/common';
+import {
+  generateNumber,
+  mobileGenerator,
+  mobileGeneratorWithOutPlus,
+} from './config/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { MobileDTO } from './dto/mobile.request.dto';
 
@@ -107,14 +111,17 @@ export class AppService {
       },
     });
     const users = response.data.data;
- 
-    if(users) {
-      const mobileNumbers = users.map((user: any) => {
-        return user.attributes.mobile
-      })
 
-      const message = SMS_REMINDERS[Math.floor(Math.random() * SMS_REMINDERS.length)];
-      const uniqueMobileNumbers = await this._checkDuplicateNumber(mobileNumbers)
+    if (users) {
+      const mobileNumbers = users.map((user: any) => {
+        return user.attributes.mobile;
+      });
+
+      const message =
+        SMS_REMINDERS[Math.floor(Math.random() * SMS_REMINDERS.length)];
+      const uniqueMobileNumbers = await this._checkDuplicateNumber(
+        mobileNumbers,
+      );
 
       uniqueMobileNumbers.forEach(async (mobileNumber: any) => {
         await axios(
@@ -129,10 +136,9 @@ export class AppService {
             data: null,
           },
         );
-      })
-      console.log("REMINDER USER COUNT: ", uniqueMobileNumbers.length)
+      });
+      console.log('REMINDER USER COUNT: ', uniqueMobileNumbers.length);
     }
-
   }
 
   async sendOTP(OTPRequestDTO: OTPRequestDTO): Promise<any> {
@@ -214,9 +220,9 @@ export class AppService {
         ) {
           await this.unsubscribe(dto);
         } else if (e?.response?.data?.fault?.code == 'POL0001') {
-          const mobileDTO : MobileDTO = {
-            mobile: dto.mobile
-          }
+          const mobileDTO: MobileDTO = {
+            mobile: dto.mobile,
+          };
 
           await this.unsubscribeFullUser(mobileDTO);
         }
