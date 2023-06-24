@@ -7,6 +7,8 @@ import {
   DELETE_USER_DATA,
   DELETE_USER_DATA_FROM_ALL,
   GET_USER_DATA,
+  IDEABIZ_SUBSCRIBE_OTP_URL,
+  IDEABIZ_VALIDATE_OTP_URL,
   SEND_SMS_URL,
   SERVICE_ID,
   SMS_REMINDERS,
@@ -143,8 +145,8 @@ export class AppService {
 
   async sendOTP(OTPRequestDTO: OTPRequestDTO): Promise<any> {
     try {
-      const otp = (OTPRequestDTO.message * 22) / 120;
-      const message = `Hi ${OTPRequestDTO.name}! Your One-Time Password is ${otp}.`;
+      const otp = (OTPRequestDTO.otp * 22) / 120;
+      const message = `Hi ${OTPRequestDTO.serverRef}! Your One-Time Password is ${otp}.`;
 
       return await axios(
         SEND_SMS_URL +
@@ -162,6 +164,55 @@ export class AppService {
       throw e;
     }
   }
+
+  async subscribeOTP(dto: MobileDTO): Promise<any> {
+    try {
+
+      const response = await axios(IDEABIZ_SUBSCRIBE_OTP_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+          Authorization: AUTH_TOKEN,
+        },
+        data: {
+          method: 'AndroidApp',
+          msisdn: `${mobileGeneratorWithOutPlus(dto.mobile)}`
+          // serviceID: SERVICE_ID,
+        },
+      });
+      console.log(response)
+
+      return response
+    } catch (e) {
+      console.log(e)
+      throw e;
+    }
+  }
+
+  
+  async validateOTP(dto: OTPRequestDTO): Promise<any> {
+    try {
+
+      const response = await axios(IDEABIZ_VALIDATE_OTP_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+          Authorization: AUTH_TOKEN,
+        },
+        data: {
+          pin: `${dto.otp}`,
+          serverRef: dto.serverRef,
+        },
+      });
+
+      return response
+    } catch (e) {
+      throw e;
+    }
+  }
+
 
   async subscribe(dto: UserSubscribeRequestDTO): Promise<any> {
     try {

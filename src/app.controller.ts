@@ -22,6 +22,34 @@ export class AppController {
     );
   }
 
+  @Post('/subscribe-otp')
+  async subscribeOTP(@Body() mobileDTO: MobileDTO): Promise<ResponseDTO> {
+   const response = await this.appService.subscribeOTP(mobileDTO);
+
+   
+    return new ResponseDTO(
+      HttpStatus.OK,
+      "Success",
+      `OTP sent Successfully`,
+      response.data ? response.data : response,
+    );
+  }
+
+  
+  @Post('/validate-otp')
+  async validateOTP(@Body() OTPRequestDTO: OTPRequestDTO): Promise<ResponseDTO> {
+   const response = await this.appService.validateOTP(OTPRequestDTO);
+
+   
+    return new ResponseDTO(
+      HttpStatus.OK,
+      "Success",
+      `OTP validated Successfully`,
+      response.data ? response.data : response,
+    );
+  }
+
+
   @Post('/subscribe')
   async subscribeUser(@Body() userSubscribeRequestDTO: UserSubscribeRequestDTO): Promise<ResponseDTO> {
    const response = await this.appService.subscribe(userSubscribeRequestDTO);

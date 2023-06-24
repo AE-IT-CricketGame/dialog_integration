@@ -18,6 +18,8 @@ export const GET_USER_DATA = MAIN_API + "leaderboards?populate=campaign"
 export const SUBSCRIBE_USER_URL = process.env.IDEABIZ_SUBSCRIBE_USER_URL
 export const UNSUBSCRIBE_USER_URL = process.env.IDEABIZ_UNSUBSCRIBE_USER_URL
 export const SERVICE_ID = process.env.IDEABIZ_SERVICE_ID
+export const IDEABIZ_SUBSCRIBE_OTP_URL = process.env.IDEABIZ_SUBSCRIBE_OTP_URL
+export const IDEABIZ_VALIDATE_OTP_URL = process.env.IDEABIZ_VALIDATE_OTP_URL
 export const CHARGE_AMOUNT = 6
 
 export const getPaymentURL = (mobile: string) => {
