@@ -6,7 +6,9 @@ import {
   CHARGE_AMOUNT,
   DELETE_USER_DATA,
   DELETE_USER_DATA_FROM_ALL,
+  GET_REMINDER_MSG,
   GET_USER_DATA,
+  IDEABIZ_SMS_URL,
   IDEABIZ_SUBSCRIBE_OTP_URL,
   IDEABIZ_VALIDATE_OTP_URL,
   SEND_SMS_URL,
@@ -103,43 +105,77 @@ export class AppService {
     return [...new Set(csvDataArr)];
   }
 
-  @Cron(CronExpression.EVERY_DAY_AT_1PM)
+  @Cron(CronExpression.EVERY_DAY_AT_6PM)
   async sendReminder() {
-    const response = await axios(GET_USER_DATA, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        Accept: 'application/json',
-      },
-    });
-    const users = response.data.data;
+    try {
+      const response = await axios(GET_USER_DATA, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
+      });
+      const users = response.data.data;
 
-    if (users) {
-      const mobileNumbers = users.map((user: any) => {
-        return user.attributes.mobile;
+      const msgData = await axios(GET_REMINDER_MSG, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        }
       });
 
-      const message =
-        SMS_REMINDERS[Math.floor(Math.random() * SMS_REMINDERS.length)];
-      const uniqueMobileNumbers = await this._checkDuplicateNumber(
-        mobileNumbers,
-      );
+      const reminderMessage = msgData?.data.data[0]?.attributes?.sms ? msgData?.data.data[0]?.attributes?.sms : SMS_REMINDERS[Math.floor(Math.random() * SMS_REMINDERS.length)];
 
-      uniqueMobileNumbers.forEach(async (mobileNumber: any) => {
-        await axios(
-          SEND_SMS_URL +
-            '&to=' +
-            mobileGeneratorWithOutPlus(mobileNumber) +
-            '&msg=' +
-            message +
-            `&msg_ref_num=SMS_REF_${Date.now()}`,
-          {
-            method: 'POST',
-            data: null,
-          },
+      if (users) {
+        const mobileNumbers = users.map((user: any) => {
+          return user.attributes.mobile;
+        });
+
+        const uniqueMobileNumbers = await this._checkDuplicateNumber(
+          mobileNumbers,
         );
-      });
-      console.log('REMINDER USER COUNT: ', uniqueMobileNumbers.length);
+
+        const nullCheckNumbers = uniqueMobileNumbers.filter(element => {
+          return element !== null;
+        });
+
+        const formatedNumbers = nullCheckNumbers.map((msisdn: string) => {
+          return `tel:+${mobileGeneratorWithOutPlus(msisdn)}`;
+        });
+
+        const requestBody = {
+          outboundSMSMessageRequest: {
+            address: formatedNumbers,
+            senderAddress: '87798',
+            outboundSMSTextMessage: {
+              message: reminderMessage,
+            },
+            clientCorrelator: '123456',
+            receiptRequest: {
+              notifyURL: null,
+              callbackData: null,
+            },
+            senderName: 'MyCricQ',
+          },
+        };
+
+        const response = await axios(IDEABIZ_SMS_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Accept: 'application/json',
+            Authorization: AUTH_TOKEN,
+          },
+          data: requestBody,
+        });
+
+        if(response.status == 201) {
+          console.log(new Date() + " All SMS SENT SUCCESSFULLY!")
+        } 
+      }
+    } catch (error) {
+      console.log(error?.response?.data)
     }
   }
 
@@ -167,7 +203,6 @@ export class AppService {
 
   async subscribeOTP(dto: MobileDTO): Promise<any> {
     try {
-
       const response = await axios(IDEABIZ_SUBSCRIBE_OTP_URL, {
         method: 'POST',
         headers: {
@@ -177,23 +212,21 @@ export class AppService {
         },
         data: {
           method: 'AndroidApp',
-          msisdn: `${mobileGeneratorWithOutPlus(dto.mobile)}`
+          msisdn: `${mobileGeneratorWithOutPlus(dto.mobile)}`,
           // serviceID: SERVICE_ID,
         },
       });
-      console.log(response)
+      console.log(response);
 
-      return response
+      return response;
     } catch (e) {
-      console.log(e)
+      console.log(e);
       throw e;
     }
   }
 
-  
   async validateOTP(dto: OTPRequestDTO): Promise<any> {
     try {
-
       const response = await axios(IDEABIZ_VALIDATE_OTP_URL, {
         method: 'POST',
         headers: {
@@ -207,12 +240,11 @@ export class AppService {
         },
       });
 
-      return response
+      return response;
     } catch (e) {
       throw e;
     }
   }
-
 
   async subscribe(dto: UserSubscribeRequestDTO): Promise<any> {
     try {

@@ -15,12 +15,14 @@ export const SEND_SMS_URL = SMS_API + '?username=' + SMS_CREDENTIALS.USERNAME + 
 export const DELETE_USER_DATA = MAIN_API + "leaderboards/"
 export const DELETE_USER_DATA_FROM_ALL = MAIN_API + "question/delete/"
 export const GET_USER_DATA = MAIN_API + "leaderboards?populate=campaign"
+export const GET_REMINDER_MSG = MAIN_API + "sms-templates"
 export const SUBSCRIBE_USER_URL = process.env.IDEABIZ_SUBSCRIBE_USER_URL
 export const UNSUBSCRIBE_USER_URL = process.env.IDEABIZ_UNSUBSCRIBE_USER_URL
 export const SERVICE_ID = process.env.IDEABIZ_SERVICE_ID
 export const IDEABIZ_SUBSCRIBE_OTP_URL = process.env.IDEABIZ_SUBSCRIBE_OTP_URL
 export const IDEABIZ_VALIDATE_OTP_URL = process.env.IDEABIZ_VALIDATE_OTP_URL
 export const CHARGE_AMOUNT = 6
+export const IDEABIZ_SMS_URL = process.env.IDEABIZ_SMS_URL
 
 export const getPaymentURL = (mobile: string) => {
     return `${process.env.IDEABIZ_PAYMENT_URL}tel:${mobileGenerator(mobile)}/transactions/amount`
