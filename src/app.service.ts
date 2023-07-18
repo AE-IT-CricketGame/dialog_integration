@@ -105,7 +105,7 @@ export class AppService {
     return [...new Set(csvDataArr)];
   }
 
-  @Cron(CronExpression.EVERY_DAY_AT_6PM)
+  @Cron(CronExpression.EVERY_DAY_AT_NOON)
   async sendReminder() {
     try {
       const response = await axios(GET_USER_DATA, {
