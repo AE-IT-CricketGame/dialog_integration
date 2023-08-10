@@ -26,12 +26,17 @@ import {
 } from './config/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { MobileDTO } from './dto/mobile.request.dto';
+import { MyLogger } from './logger/logger.service';
 
 @Injectable()
 export class AppService {
+
+  constructor(private readonly logger: MyLogger) {}
+
   @Cron(CronExpression.EVERY_DAY_AT_7PM)
   async triggerPayments() {
     try {
+      this.logger.log("==== TRIGERRING CHARGES FOR USERS =====", AppService.name)
       const response = await axios(GET_USER_DATA, {
         method: 'GET',
         headers: {
@@ -39,6 +44,9 @@ export class AppService {
           Accept: 'application/json',
         },
       });
+      this.logger.log("==== ALL USERS FROM DB =====", AppService.name)
+      this.logger.log(JSON.stringify(response.data.data), AppService.name)
+      this.logger.log("User Count: " + JSON.stringify(response.data.data.length), AppService.name)
       if (response.data.data.length != 0) {
         const users = response.data.data;
         users.forEach(async (element: any) => {
@@ -74,6 +82,7 @@ export class AppService {
               },
             },
           }).catch(async (e) => {
+            this.logger.error(JSON.stringify(e?.response?.data), AppService.name)
             if (
               e?.response?.data?.fault?.code == 'POL0001' ||
               e?.response?.data?.requestError?.policyException?.messageId ==
@@ -89,6 +98,7 @@ export class AppService {
                   element.attributes.campaign.data.attributes.campaign_name,
               };
               console.log(dto);
+              this.logger.error("dto" + JSON.stringify(dto), AppService.name)
               await this.unsubscribe(dto);
             }
           });

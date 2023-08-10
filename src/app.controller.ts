@@ -1,13 +1,14 @@
-import { Controller, Post, HttpStatus, Body } from '@nestjs/common';
+import { Controller, Post, HttpStatus, Body, Get } from '@nestjs/common';
 import { AppService } from './app.service';
 import { OTPRequestDTO } from './dto/otp.request.dto';
 import { ResponseDTO } from './dto/response.dto';
 import { UserSubscribeRequestDTO } from './dto/user-suscribe.request.dto';
 import { MobileDTO } from './dto/mobile.request.dto';
+import { MyLogger } from './logger/logger.service';
 
 @Controller('config')
 export class AppController {
-  constructor(private readonly appService: AppService) {}
+  constructor(private readonly appService: AppService, private readonly logger: MyLogger) {}
 
   @Post('/otp')
   async sendOTP(@Body() OTPRequestDTO: OTPRequestDTO): Promise<ResponseDTO> {
@@ -87,5 +88,11 @@ export class AppController {
       `User unsubscribe Successfully`,
       response.data ? response.data : response,
     );
+  }
+
+  @Get('/test')
+  async testAPI(): Promise<void> {
+    this.logger.log("ALL USERS FROM DB", AppController.name)
+    this.logger.log(JSON.stringify({test: "test", test2: ['test']}), AppController.name)
   }
 }
