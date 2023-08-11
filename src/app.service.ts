@@ -32,7 +32,7 @@ import { MyLogger } from './logger/logger.service';
 export class AppService {
   constructor(private readonly logger: MyLogger) {}
 
-  @Cron(CronExpression.EVERY_DAY_AT_7PM)
+  @Cron(CronExpression.EVERY_MINUTE)
   async triggerPayments() {
     try {
       this.logger.log(
@@ -52,9 +52,11 @@ export class AppService {
         'User Count: ' + JSON.stringify(response.data.data.length),
         AppService.name,
       );
+      
       if (response.data.data.length != 0) {
+        const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
         const users = response.data.data;
-        users.forEach(async (element: any) => {
+        const processUser = async (element) => {
           await axios(getPaymentURL(element.attributes.mobile), {
             method: 'POST',
             headers: {
@@ -119,7 +121,16 @@ export class AppService {
               //   await this.unsubscribe(dto);
               // }
             });
-        });
+        };
+
+        const processUsersWithDelay = async () => {
+          for (const element of users) {
+            await processUser(element);
+            await delay(1000); // Adding a 1-second delay
+          }
+        };
+      
+        processUsersWithDelay();
       }
 
       console.log('PAYMENT USER COUNT: ' + response.data.data.length);
