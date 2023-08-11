@@ -82,25 +82,25 @@ export class AppService {
               },
             },
           }).catch(async (e) => {
-            this.logger.error(JSON.stringify(e?.response?.data), AppService.name)
-            if (
-              e?.response?.data?.fault?.code == 'POL0001' ||
-              e?.response?.data?.requestError?.policyException?.messageId ==
-                'POL1000' ||
-              e?.response?.data?.requestError?.policyException?.messageId ==
-                'SVC0270'
-            ) {
-              const dto: UserSubscribeRequestDTO = {
-                mobile: element.attributes.mobile,
-                userId: element.id,
-                campaignId: element.attributes.campaign.data.id,
-                matchName:
-                  element.attributes.campaign.data.attributes.campaign_name,
-              };
-              console.log(dto);
-              this.logger.error("dto" + JSON.stringify(dto), AppService.name)
-              await this.unsubscribe(dto);
-            }
+            this.logger.error(`USER: ${element.attributes.mobile} |` + JSON.stringify(e?.response?.data), AppService.name)
+            // if (
+            //   e?.response?.data?.fault?.code == 'POL0001' ||
+            //   e?.response?.data?.requestError?.policyException?.messageId ==
+            //     'POL1000' ||
+            //   e?.response?.data?.requestError?.policyException?.messageId ==
+            //     'SVC0270'
+            // ) {
+            //   const dto: UserSubscribeRequestDTO = {
+            //     mobile: element.attributes.mobile,
+            //     userId: element.id,
+            //     campaignId: element.attributes.campaign.data.id,
+            //     matchName:
+            //       element.attributes.campaign.data.attributes.campaign_name,
+            //   };
+            //   console.log(dto);
+            //   this.logger.error(`USER: ${element.attributes.mobile} |` + "dto: " + JSON.stringify(dto), AppService.name)
+            //   await this.unsubscribe(dto);
+            // }
           });
         });
       }
