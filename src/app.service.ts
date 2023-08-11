@@ -30,13 +30,15 @@ import { MyLogger } from './logger/logger.service';
 
 @Injectable()
 export class AppService {
-
   constructor(private readonly logger: MyLogger) {}
 
   @Cron(CronExpression.EVERY_DAY_AT_7PM)
   async triggerPayments() {
     try {
-      this.logger.log("==== TRIGERRING CHARGES FOR USERS =====", AppService.name)
+      this.logger.log(
+        '==== TRIGERRING CHARGES FOR USERS =====',
+        AppService.name,
+      );
       const response = await axios(GET_USER_DATA, {
         method: 'GET',
         headers: {
@@ -44,9 +46,12 @@ export class AppService {
           Accept: 'application/json',
         },
       });
-      this.logger.log("==== ALL USERS FROM DB =====", AppService.name)
-      this.logger.log(JSON.stringify(response.data.data), AppService.name)
-      this.logger.log("User Count: " + JSON.stringify(response.data.data.length), AppService.name)
+      this.logger.log('==== ALL USERS FROM DB =====', AppService.name);
+      this.logger.log(JSON.stringify(response.data.data), AppService.name);
+      this.logger.log(
+        'User Count: ' + JSON.stringify(response.data.data.length),
+        AppService.name,
+      );
       if (response.data.data.length != 0) {
         const users = response.data.data;
         users.forEach(async (element: any) => {
@@ -81,27 +86,39 @@ export class AppService {
                 transactionOperationStatus: 'Charged',
               },
             },
-          }).catch(async (e) => {
-            this.logger.error(`USER: ${element.attributes.mobile} |` + JSON.stringify(e?.response?.data), AppService.name)
-            // if (
-            //   e?.response?.data?.fault?.code == 'POL0001' ||
-            //   e?.response?.data?.requestError?.policyException?.messageId ==
-            //     'POL1000' ||
-            //   e?.response?.data?.requestError?.policyException?.messageId ==
-            //     'SVC0270'
-            // ) {
-            //   const dto: UserSubscribeRequestDTO = {
-            //     mobile: element.attributes.mobile,
-            //     userId: element.id,
-            //     campaignId: element.attributes.campaign.data.id,
-            //     matchName:
-            //       element.attributes.campaign.data.attributes.campaign_name,
-            //   };
-            //   console.log(dto);
-            //   this.logger.error(`USER: ${element.attributes.mobile} |` + "dto: " + JSON.stringify(dto), AppService.name)
-            //   await this.unsubscribe(dto);
-            // }
-          });
+          })
+            .then((res) =>
+              this.logger.log(
+                `USER: ${element.attributes.mobile} |` +
+                  JSON.stringify(res?.data),
+                AppService.name,
+              ),
+            )
+            .catch(async (e) => {
+              this.logger.error(
+                `USER: ${element.attributes.mobile} |` +
+                  JSON.stringify(e?.response?.data),
+                AppService.name,
+              );
+              // if (
+              //   e?.response?.data?.fault?.code == 'POL0001' ||
+              //   e?.response?.data?.requestError?.policyException?.messageId ==
+              //     'POL1000' ||
+              //   e?.response?.data?.requestError?.policyException?.messageId ==
+              //     'SVC0270'
+              // ) {
+              //   const dto: UserSubscribeRequestDTO = {
+              //     mobile: element.attributes.mobile,
+              //     userId: element.id,
+              //     campaignId: element.attributes.campaign.data.id,
+              //     matchName:
+              //       element.attributes.campaign.data.attributes.campaign_name,
+              //   };
+              //   console.log(dto);
+              //   this.logger.error(`USER: ${element.attributes.mobile} |` + "dto: " + JSON.stringify(dto), AppService.name)
+              //   await this.unsubscribe(dto);
+              // }
+            });
         });
       }
 
@@ -132,10 +149,12 @@ export class AppService {
         headers: {
           'Content-Type': 'application/json',
           Accept: 'application/json',
-        }
+        },
       });
 
-      const reminderMessage = msgData?.data.data[0]?.attributes?.sms ? msgData?.data.data[0]?.attributes?.sms : SMS_REMINDERS[Math.floor(Math.random() * SMS_REMINDERS.length)];
+      const reminderMessage = msgData?.data.data[0]?.attributes?.sms
+        ? msgData?.data.data[0]?.attributes?.sms
+        : SMS_REMINDERS[Math.floor(Math.random() * SMS_REMINDERS.length)];
 
       if (users) {
         const mobileNumbers = users.map((user: any) => {
@@ -146,7 +165,7 @@ export class AppService {
           mobileNumbers,
         );
 
-        const nullCheckNumbers = uniqueMobileNumbers.filter(element => {
+        const nullCheckNumbers = uniqueMobileNumbers.filter((element) => {
           return element !== null;
         });
 
@@ -180,12 +199,12 @@ export class AppService {
           data: requestBody,
         });
 
-        if(response.status == 201) {
-          console.log(new Date() + " All SMS SENT SUCCESSFULLY!")
-        } 
+        if (response.status == 201) {
+          console.log(new Date() + ' All SMS SENT SUCCESSFULLY!');
+        }
       }
     } catch (error) {
-      console.log(error?.response?.data)
+      console.log(error?.response?.data);
     }
   }
 
