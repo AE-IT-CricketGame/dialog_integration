@@ -52,9 +52,10 @@ export class AppService {
         'User Count: ' + JSON.stringify(response.data.data.length),
         AppService.name,
       );
-      
+
       if (response.data.data.length != 0) {
-        const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+        const delay = (ms: number) =>
+          new Promise((resolve) => setTimeout(resolve, ms));
         const users = response.data.data;
         const processUser = async (element) => {
           await axios(getPaymentURL(element.attributes.mobile), {
@@ -129,7 +130,7 @@ export class AppService {
             await delay(1000); // Adding a 1-second delay
           }
         };
-      
+
         processUsersWithDelay();
       }
 
@@ -145,6 +146,10 @@ export class AppService {
 
   @Cron(CronExpression.EVERY_DAY_AT_NOON)
   async sendReminder() {
+    const chunkSize = 10;
+    const chunks = [];
+    const delayBetweenRequests = 1000;
+    
     try {
       const response = await axios(GET_USER_DATA, {
         method: 'GET',
@@ -184,39 +189,60 @@ export class AppService {
           return `tel:+${mobileGeneratorWithOutPlus(msisdn)}`;
         });
 
-        const requestBody = {
-          outboundSMSMessageRequest: {
-            address: formatedNumbers,
-            senderAddress: '87798',
-            outboundSMSTextMessage: {
-              message: reminderMessage,
+   
+        for (let i = 0; i < formatedNumbers.length; i += chunkSize) {
+          chunks.push(formatedNumbers.slice(i, i + chunkSize));
+        }
+
+        const sendSMSWithDelay = async (chunk) => {
+          const requestBody = {
+            outboundSMSMessageRequest: {
+              address: chunk,
+              senderAddress: '87798',
+              outboundSMSTextMessage: {
+                message: reminderMessage,
+              },
+              clientCorrelator: '123456',
+              receiptRequest: {
+                notifyURL: null,
+                callbackData: null,
+              },
+              senderName: 'MyCricQ',
             },
-            clientCorrelator: '123456',
-            receiptRequest: {
-              notifyURL: null,
-              callbackData: null,
-            },
-            senderName: 'MyCricQ',
-          },
+          };
+        
+       
+            const response = await axios.post(IDEABIZ_SMS_URL, requestBody, {
+              headers: {
+                'Content-Type': 'application/json',
+                Accept: 'application/json',
+                Authorization: AUTH_TOKEN,
+              },
+            });
+        
+            // Process the response if needed
+            console.log('SMS sent successfully:', response.data);
+        
         };
 
-        const response = await axios(IDEABIZ_SMS_URL, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Accept: 'application/json',
-            Authorization: AUTH_TOKEN,
-          },
-          data: requestBody,
-        });
-
-        if (response.status == 201) {
-          console.log(new Date() + ' All SMS SENT SUCCESSFULLY!');
-        }
+        const sendSMSRequests = async () => {
+          for (const chunk of chunks) {
+            await sendSMSWithDelay(chunk);
+            await new Promise(resolve => setTimeout(resolve, delayBetweenRequests));
+          }
+        };
+        
+        // Call the function to start sending SMS requests
+        sendSMSRequests();
       }
+
+      
     } catch (error) {
       console.log(error?.response?.data);
     }
+
+    
+    
   }
 
   async sendOTP(OTPRequestDTO: OTPRequestDTO): Promise<any> {
