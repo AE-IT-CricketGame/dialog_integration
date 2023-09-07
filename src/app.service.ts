@@ -310,7 +310,10 @@ export class AppService {
             },
           },
         });
-
+        this.logger.log(
+          '==== SUBSCRIBE MOBITEL ====' + response.data,
+          AppService.name,
+        );
         const returnResponse = {
           ...response.data,
           serverRef: response.data?.referenceNo,
