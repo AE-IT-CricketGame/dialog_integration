@@ -304,6 +304,7 @@ export class AppService {
           },
           data: {
             applicationId: MSPACE_APPID,
+            password: "eea1ebf64d8eca14380a0da39aba9f8b",
             subscriberId: `tel:${mobileGeneratorWithOutPlus(dto.mobile)}`,
             applicationHash: generateStringHash(10),
             applicationMetaData: {
@@ -364,6 +365,7 @@ export class AppService {
           },
           data: {
             applicationId: MSPACE_APPID,
+            password: "eea1ebf64d8eca14380a0da39aba9f8b",
             subscriberId: `tel:${mobileGeneratorWithOutPlus(dto.mobile)}`,
             referenceNo: dto.serverRef,
             otp: dto.otp,
