@@ -120,7 +120,7 @@ export class AppService {
                   AppService.name,
                 );
               });
-          } else  if (
+          } else if (
             (await validateServiceProvider(element.attributes.mobile)) ==
             SERVICE_PROVIDERS.MOBITEL
           ) {
@@ -133,7 +133,9 @@ export class AppService {
               data: {
                 applicationId: MSPACE_APPID,
                 externalTrxId: `${generateNumber(11)}`,
-                subscriberId: `tel:${mobileGeneratorWithOutPlus(element.attributes.mobile)}`,
+                subscriberId: `tel:${mobileGeneratorWithOutPlus(
+                  element.attributes.mobile,
+                )}`,
                 paymentInstrumentName: 'Mobile Account',
                 amount: '1',
                 currency: 'LKR',
@@ -304,7 +306,7 @@ export class AppService {
           },
           data: {
             applicationId: MSPACE_APPID,
-            password: "eea1ebf64d8eca14380a0da39aba9f8b",
+            password: 'eea1ebf64d8eca14380a0da39aba9f8b',
             subscriberId: `tel:${mobileGeneratorWithOutPlus(dto.mobile)}`,
             applicationHash: generateStringHash(10),
             applicationMetaData: {
@@ -320,13 +322,17 @@ export class AppService {
           AppService.name,
         );
         const returnResponse = {
-          data : {
+          data: {
             ...response.data,
             msisdn: `${mobileGeneratorWithOutPlus(dto.mobile)}`,
             serverRef: response.data?.referenceNo,
-            status: "PENDING_AUTH"
-          }
-          
+            data: {
+              msisdn: `${mobileGeneratorWithOutPlus(dto.mobile)}`,
+              serverRef: response.data?.referenceNo,
+              status: 'PENDING_AUTH',
+            },
+          },
+          msisdn: `${mobileGeneratorWithOutPlus(dto.mobile)}`
         };
         return returnResponse;
       }
@@ -370,7 +376,7 @@ export class AppService {
           },
           data: {
             applicationId: MSPACE_APPID,
-            password: "eea1ebf64d8eca14380a0da39aba9f8b",
+            password: 'eea1ebf64d8eca14380a0da39aba9f8b',
             subscriberId: `tel:${mobileGeneratorWithOutPlus(dto.mobile)}`,
             referenceNo: dto.serverRef,
             otp: dto.otp,
