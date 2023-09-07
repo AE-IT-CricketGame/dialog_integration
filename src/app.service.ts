@@ -320,8 +320,11 @@ export class AppService {
           AppService.name,
         );
         const returnResponse = {
-          ...response.data,
-          serverRef: response.data?.referenceNo,
+          data : {
+            ...response.data,
+            serverRef: response.data?.referenceNo,
+          }
+          
         };
         return returnResponse;
       }
