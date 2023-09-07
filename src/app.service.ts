@@ -292,6 +292,10 @@ export class AppService {
 
         return response;
       } else if ((await validateServiceProvider(dto.mobile)) == 'mobitel') {
+        this.logger.log(
+          '==== SUBSCRIBE OTP MOBITEL ENDPOINT CALLED ====',
+          AppService.name,
+        );
         const response = await axios(MSPACE_OTP_URL, {
           method: 'POST',
           headers: {
@@ -311,7 +315,7 @@ export class AppService {
           },
         });
         this.logger.log(
-          '==== SUBSCRIBE MOBITEL ====' + response.data,
+          '==== SUBSCRIBE OTP MOBITEL ====' + response.data,
           AppService.name,
         );
         const returnResponse = {
@@ -322,6 +326,10 @@ export class AppService {
       }
     } catch (e) {
       console.log(e);
+      this.logger.error(
+        '==== SUBSCRIBE OTP MOBITEL ====' + e?.response,
+        AppService.name,
+      );
       throw e;
     }
   }
@@ -344,6 +352,10 @@ export class AppService {
 
         return response;
       } else if ((await validateServiceProvider(dto.mobile)) == 'mobitel') {
+        this.logger.log(
+          '==== VERIFY MOBITEL ENDPOINT CALLED ====',
+          AppService.name,
+        );
         const response = await axios(MSPACE_OTP_VERIFY_URL, {
           method: 'POST',
           headers: {
@@ -357,10 +369,17 @@ export class AppService {
             otp: dto.otp,
           },
         });
-
+        this.logger.log(
+          '==== VERIFY MOBITEL ====' + response.data,
+          AppService.name,
+        );
         return response;
       }
     } catch (e) {
+      this.logger.error(
+        '==== VERIFY OTP MOBITEL ====' + e?.response,
+        AppService.name,
+      );
       throw e;
     }
   }
