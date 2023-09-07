@@ -11,8 +11,15 @@ import {
   IDEABIZ_SMS_URL,
   IDEABIZ_SUBSCRIBE_OTP_URL,
   IDEABIZ_VALIDATE_OTP_URL,
+  MSPACE_APPID,
+  MSPACE_AUTH_TOKEN,
+  MSPACE_OTP_URL,
+  MSPACE_OTP_VERIFY_URL,
+  MSPACE_PAYMENT_URL,
+  MSPACE_SUBSCRIBE_URL,
   SEND_SMS_URL,
   SERVICE_ID,
+  SERVICE_PROVIDERS,
   SMS_REMINDERS,
   SUBSCRIBE_USER_URL,
   UNSUBSCRIBE_USER_URL,
@@ -20,9 +27,12 @@ import {
 } from './config/const';
 import { UserSubscribeRequestDTO } from './dto/user-suscribe.request.dto';
 import {
+  _checkDuplicateNumber,
   generateNumber,
+  generateStringHash,
   mobileGenerator,
   mobileGeneratorWithOutPlus,
+  validateServiceProvider,
 } from './config/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { MobileDTO } from './dto/mobile.request.dto';
@@ -58,70 +68,78 @@ export class AppService {
           new Promise((resolve) => setTimeout(resolve, ms));
         const users = response.data.data;
         const processUser = async (element) => {
-          await axios(getPaymentURL(element.attributes.mobile), {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              Accept: 'application/json',
-              Authorization: AUTH_TOKEN,
-            },
-            data: {
-              amountTransaction: {
-                clientCorrelator: `${mobileGenerator(
-                  element.attributes.mobile,
-                )}-${Date.now()}`,
-                endUserId: `tel:${mobileGenerator(element.attributes.mobile)}`,
-                paymentAmount: {
-                  chargingInformation: {
-                    amount: CHARGE_AMOUNT,
-                    currency: 'LKR',
-                    description: `My CrickQ (${element.attributes.campaign.data.attributes.campaign_name}).`,
-                  },
-                  chargingMetaData: {
-                    onBehalfOf: 'My CrickQ',
-                    purchaseCategoryCode: 'Service',
-                    channel: 'WAP',
-                    taxAmount: '0',
-                    serviceID: SERVICE_ID,
-                  },
-                },
-                referenceCode: `REF-${Date.now()}`,
-                transactionOperationStatus: 'Charged',
+          if (
+            (await validateServiceProvider(element.attributes.mobile)) ==
+            SERVICE_PROVIDERS.DIALOG
+          ) {
+            await axios(getPaymentURL(element.attributes.mobile), {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                Accept: 'application/json',
+                Authorization: AUTH_TOKEN,
               },
-            },
-          })
-            .then((res) =>
-              this.logger.log(
-                `USER: ${element.attributes.mobile} |` +
-                  JSON.stringify(res?.data),
-                AppService.name,
-              ),
-            )
-            .catch(async (e) => {
-              this.logger.error(
-                `USER: ${element.attributes.mobile} |` +
-                  JSON.stringify(e?.response?.data),
-                AppService.name,
-              );
-              // if (
-              //   e?.response?.data?.fault?.code == 'POL0001' ||
-              //   e?.response?.data?.requestError?.policyException?.messageId ==
-              //     'POL1000' ||
-              //   e?.response?.data?.requestError?.policyException?.messageId ==
-              //     'SVC0270'
-              // ) {
-              //   const dto: UserSubscribeRequestDTO = {
-              //     mobile: element.attributes.mobile,
-              //     userId: element.id,
-              //     campaignId: element.attributes.campaign.data.id,
-              //     matchName:
-              //       element.attributes.campaign.data.attributes.campaign_name,
-              //   };
-              //   console.log(dto);
-              //   this.logger.error(`USER: ${element.attributes.mobile} |` + "dto: " + JSON.stringify(dto), AppService.name)
-              //   await this.unsubscribe(dto);
-              // }
+              data: {
+                amountTransaction: {
+                  clientCorrelator: `${mobileGenerator(
+                    element.attributes.mobile,
+                  )}-${Date.now()}`,
+                  endUserId: `tel:${mobileGenerator(
+                    element.attributes.mobile,
+                  )}`,
+                  paymentAmount: {
+                    chargingInformation: {
+                      amount: CHARGE_AMOUNT,
+                      currency: 'LKR',
+                      description: `My CrickQ (${element.attributes.campaign.data.attributes.campaign_name}).`,
+                    },
+                    chargingMetaData: {
+                      onBehalfOf: 'My CrickQ',
+                      purchaseCategoryCode: 'Service',
+                      channel: 'WAP',
+                      taxAmount: '0',
+                      serviceID: SERVICE_ID,
+                    },
+                  },
+                  referenceCode: `REF-${Date.now()}`,
+                  transactionOperationStatus: 'Charged',
+                },
+              },
+            })
+              .then((res) =>
+                this.logger.log(
+                  `USER: ${element.attributes.mobile} |` +
+                    JSON.stringify(res?.data),
+                  AppService.name,
+                ),
+              )
+              .catch(async (e) => {
+                this.logger.error(
+                  `USER: ${element.attributes.mobile} |` +
+                    JSON.stringify(e?.response?.data),
+                  AppService.name,
+                );
+              });
+          } else  if (
+            (await validateServiceProvider(element.attributes.mobile)) ==
+            SERVICE_PROVIDERS.MOBITEL
+          ) {
+            const response = await axios(MSPACE_PAYMENT_URL, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                Accept: 'application/json',
+              },
+              data: {
+                applicationId: MSPACE_APPID,
+                externalTrxId: `${generateNumber(11)}`,
+                subscriberId: `tel:${mobileGeneratorWithOutPlus(element.attributes.mobile)}`,
+                paymentInstrumentName: 'Mobile Account',
+                amount: '1',
+                currency: 'LKR',
+              },
             });
+          }
         };
 
         const processUsersWithDelay = async () => {
@@ -140,16 +158,12 @@ export class AppService {
     }
   }
 
-  async _checkDuplicateNumber(csvDataArr) {
-    return [...new Set(csvDataArr)];
-  }
-
   @Cron(CronExpression.EVERY_DAY_AT_NOON)
   async sendReminder() {
     const chunkSize = 10;
     const chunks = [];
     const delayBetweenRequests = 1000;
-    
+
     try {
       const response = await axios(GET_USER_DATA, {
         method: 'GET',
@@ -177,9 +191,7 @@ export class AppService {
           return user.attributes.mobile;
         });
 
-        const uniqueMobileNumbers = await this._checkDuplicateNumber(
-          mobileNumbers,
-        );
+        const uniqueMobileNumbers = await _checkDuplicateNumber(mobileNumbers);
 
         const nullCheckNumbers = uniqueMobileNumbers.filter((element) => {
           return element !== null;
@@ -189,7 +201,6 @@ export class AppService {
           return `tel:+${mobileGeneratorWithOutPlus(msisdn)}`;
         });
 
-   
         for (let i = 0; i < formatedNumbers.length; i += chunkSize) {
           chunks.push(formatedNumbers.slice(i, i + chunkSize));
         }
@@ -210,39 +221,34 @@ export class AppService {
               senderName: 'MyCricQ',
             },
           };
-        
-       
-            const response = await axios.post(IDEABIZ_SMS_URL, requestBody, {
-              headers: {
-                'Content-Type': 'application/json',
-                Accept: 'application/json',
-                Authorization: AUTH_TOKEN,
-              },
-            });
-        
-            // Process the response if needed
-            console.log('SMS sent successfully:', response.data);
-        
+
+          const response = await axios.post(IDEABIZ_SMS_URL, requestBody, {
+            headers: {
+              'Content-Type': 'application/json',
+              Accept: 'application/json',
+              Authorization: AUTH_TOKEN,
+            },
+          });
+
+          // Process the response if needed
+          console.log('SMS sent successfully:', response.data);
         };
 
         const sendSMSRequests = async () => {
           for (const chunk of chunks) {
             await sendSMSWithDelay(chunk);
-            await new Promise(resolve => setTimeout(resolve, delayBetweenRequests));
+            await new Promise((resolve) =>
+              setTimeout(resolve, delayBetweenRequests),
+            );
           }
         };
-        
+
         // Call the function to start sending SMS requests
         sendSMSRequests();
       }
-
-      
     } catch (error) {
       console.log(error?.response?.data);
     }
-
-    
-    
   }
 
   async sendOTP(OTPRequestDTO: OTPRequestDTO): Promise<any> {
@@ -269,22 +275,48 @@ export class AppService {
 
   async subscribeOTP(dto: MobileDTO): Promise<any> {
     try {
-      const response = await axios(IDEABIZ_SUBSCRIBE_OTP_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Accept: 'application/json',
-          Authorization: AUTH_TOKEN,
-        },
-        data: {
-          method: 'AndroidApp',
-          msisdn: `${mobileGeneratorWithOutPlus(dto.mobile)}`,
-          // serviceID: SERVICE_ID,
-        },
-      });
-      console.log(response);
+      if ((await validateServiceProvider(dto.mobile)) == 'dialog') {
+        const response = await axios(IDEABIZ_SUBSCRIBE_OTP_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Accept: 'application/json',
+            Authorization: AUTH_TOKEN,
+          },
+          data: {
+            method: 'AndroidApp',
+            msisdn: `${mobileGeneratorWithOutPlus(dto.mobile)}`,
+            // serviceID: SERVICE_ID,
+          },
+        });
 
-      return response;
+        return response;
+      } else if ((await validateServiceProvider(dto.mobile)) == 'mobitel') {
+        const response = await axios(MSPACE_OTP_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Accept: 'application/json',
+          },
+          data: {
+            applicationId: MSPACE_APPID,
+            subscriberId: `tel:${mobileGeneratorWithOutPlus(dto.mobile)}`,
+            applicationHash: generateStringHash(10),
+            applicationMetaData: {
+              client: 'MOBILEAPP',
+              device: 'Samsung S8',
+              os: 'Windows 10',
+              appCode: 'https://mycricq.com',
+            },
+          },
+        });
+
+        const returnResponse = {
+          ...response.data,
+          serverRef: response.data?.referenceNo,
+        };
+        return returnResponse;
+      }
     } catch (e) {
       console.log(e);
       throw e;
@@ -293,20 +325,38 @@ export class AppService {
 
   async validateOTP(dto: OTPRequestDTO): Promise<any> {
     try {
-      const response = await axios(IDEABIZ_VALIDATE_OTP_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Accept: 'application/json',
-          Authorization: AUTH_TOKEN,
-        },
-        data: {
-          pin: `${dto.otp}`,
-          serverRef: dto.serverRef,
-        },
-      });
+      if ((await validateServiceProvider(dto.mobile)) == 'dialog') {
+        const response = await axios(IDEABIZ_VALIDATE_OTP_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Accept: 'application/json',
+            Authorization: AUTH_TOKEN,
+          },
+          data: {
+            pin: `${dto.otp}`,
+            serverRef: dto.serverRef,
+          },
+        });
 
-      return response;
+        return response;
+      } else if ((await validateServiceProvider(dto.mobile)) == 'mobitel') {
+        const response = await axios(MSPACE_OTP_VERIFY_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Accept: 'application/json',
+          },
+          data: {
+            applicationId: MSPACE_APPID,
+            subscriberId: `tel:${mobileGeneratorWithOutPlus(dto.mobile)}`,
+            referenceNo: dto.serverRef,
+            otp: dto.otp,
+          },
+        });
+
+        return response;
+      }
     } catch (e) {
       throw e;
     }
@@ -329,53 +379,75 @@ export class AppService {
       // });
 
       // if (response.data.status == 'SUBSCRIBED') {
-      await axios(getPaymentURL(dto.mobile), {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Accept: 'application/json',
-          Authorization: AUTH_TOKEN,
-        },
-        data: {
-          amountTransaction: {
-            clientCorrelator: `${mobileGenerator(dto.mobile)}-${Date.now()}`,
-            endUserId: `tel:${mobileGenerator(dto.mobile)}`,
-            paymentAmount: {
-              chargingInformation: {
-                amount: CHARGE_AMOUNT,
-                currency: 'LKR',
-                description: `My CrickQ (${dto.matchName}).`,
-              },
-              chargingMetaData: {
-                onBehalfOf: 'My CrickQ',
-                purchaseCategoryCode: 'Service',
-                channel: 'WAP',
-                taxAmount: '0',
-                serviceID: SERVICE_ID,
-              },
-            },
-            referenceCode: `REF-${Date.now()}`,
-            transactionOperationStatus: 'Charged',
+      if (
+        (await validateServiceProvider(dto.mobile)) == SERVICE_PROVIDERS.DIALOG
+      ) {
+        await axios(getPaymentURL(dto.mobile), {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Accept: 'application/json',
+            Authorization: AUTH_TOKEN,
           },
-        },
-      }).catch(async (e) => {
-        if (
-          e?.response?.data?.requestError?.policyException?.messageId ==
-            'POL1000' ||
-          e?.response?.data?.requestError?.policyException?.messageId ==
-            'SVC0270' ||
-          e?.response?.data?.requestError?.policyException?.messageId ==
-            'POL1001'
-        ) {
-          await this.unsubscribe(dto);
-        } else if (e?.response?.data?.fault?.code == 'POL0001') {
-          const mobileDTO: MobileDTO = {
-            mobile: dto.mobile,
-          };
+          data: {
+            amountTransaction: {
+              clientCorrelator: `${mobileGenerator(dto.mobile)}-${Date.now()}`,
+              endUserId: `tel:${mobileGenerator(dto.mobile)}`,
+              paymentAmount: {
+                chargingInformation: {
+                  amount: CHARGE_AMOUNT,
+                  currency: 'LKR',
+                  description: `My CrickQ (${dto.matchName}).`,
+                },
+                chargingMetaData: {
+                  onBehalfOf: 'My CrickQ',
+                  purchaseCategoryCode: 'Service',
+                  channel: 'WAP',
+                  taxAmount: '0',
+                  serviceID: SERVICE_ID,
+                },
+              },
+              referenceCode: `REF-${Date.now()}`,
+              transactionOperationStatus: 'Charged',
+            },
+          },
+        }).catch(async (e) => {
+          if (
+            e?.response?.data?.requestError?.policyException?.messageId ==
+              'POL1000' ||
+            e?.response?.data?.requestError?.policyException?.messageId ==
+              'SVC0270' ||
+            e?.response?.data?.requestError?.policyException?.messageId ==
+              'POL1001'
+          ) {
+            await this.unsubscribe(dto);
+          } else if (e?.response?.data?.fault?.code == 'POL0001') {
+            const mobileDTO: MobileDTO = {
+              mobile: dto.mobile,
+            };
 
-          await this.unsubscribeFullUser(mobileDTO);
-        }
-      });
+            await this.unsubscribeFullUser(mobileDTO);
+          }
+        });
+      } else if (
+        (await validateServiceProvider(dto.mobile)) == SERVICE_PROVIDERS.MOBITEL
+      ) {
+        const response = await axios(MSPACE_PAYMENT_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Accept: 'application/json',
+          },
+          data: {
+            applicationId: MSPACE_APPID,
+            externalTrxId: `${generateNumber(11)}`,
+            subscriberId: `tel:${mobileGeneratorWithOutPlus(dto.mobile)}`,
+            paymentInstrumentName: 'Mobile Account',
+            amount: '1',
+            currency: 'LKR',
+          },
+        });
+      }
 
       return 'Succefully Subscribed';
     } catch (e) {
@@ -386,24 +458,47 @@ export class AppService {
   async unsubscribeFullUser(dto: MobileDTO): Promise<any> {
     try {
       console.log(dto);
-      const response = await axios(UNSUBSCRIBE_USER_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Accept: 'application/json',
-          Authorization: AUTH_TOKEN,
-        },
-        data: {
-          method: 'WEB',
-          msisdn: `tel:${mobileGenerator(dto.mobile)}`,
-          serviceID: SERVICE_ID,
-        },
-      });
-
       if (
-        response?.data?.data?.subscribeResponse?.status == 'UNSUBSCRIBED' ||
-        response.data?.data?.subscribeResponse?.status == 'NOT_SUBSCRIBED'
+        (await validateServiceProvider(dto.mobile)) == SERVICE_PROVIDERS.DIALOG
       ) {
+        const response = await axios(UNSUBSCRIBE_USER_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Accept: 'application/json',
+            Authorization: AUTH_TOKEN,
+          },
+          data: {
+            method: 'WEB',
+            msisdn: `tel:${mobileGenerator(dto.mobile)}`,
+            serviceID: SERVICE_ID,
+          },
+        });
+
+        if (
+          response?.data?.data?.subscribeResponse?.status == 'UNSUBSCRIBED' ||
+          response.data?.data?.subscribeResponse?.status == 'NOT_SUBSCRIBED'
+        ) {
+          await axios(DELETE_USER_DATA_FROM_ALL + dto.mobile, {
+            method: 'POST',
+          });
+        }
+      } else if (
+        (await validateServiceProvider(dto.mobile)) == SERVICE_PROVIDERS.MOBITEL
+      ) {
+        const response = await axios(MSPACE_SUBSCRIBE_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Accept: 'application/json',
+          },
+          data: {
+            applicationId: MSPACE_APPID,
+            subscriberId: `tel:${mobileGeneratorWithOutPlus(dto.mobile)}`,
+            action: '0',
+          },
+        });
+
         await axios(DELETE_USER_DATA_FROM_ALL + dto.mobile, {
           method: 'POST',
         });
