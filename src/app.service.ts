@@ -322,7 +322,9 @@ export class AppService {
         const returnResponse = {
           data : {
             ...response.data,
+            msisdn: `${mobileGeneratorWithOutPlus(dto.mobile)}`,
             serverRef: response.data?.referenceNo,
+            status: "PENDING_AUTH"
           }
           
         };
