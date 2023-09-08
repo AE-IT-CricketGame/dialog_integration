@@ -348,6 +348,10 @@ export class AppService {
   }
 
   async validateOTP(dto: OTPRequestDTO): Promise<any> {
+    this.logger.log(
+      '==== OTPRequestDTO ====' + JSON.stringify(dto),
+      AppService.name,
+    );
     try {
       if ((await validateServiceProvider(dto.mobile)) == 'dialog') {
         const response = await axios(IDEABIZ_VALIDATE_OTP_URL, {
