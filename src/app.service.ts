@@ -120,28 +120,29 @@ export class AppService {
                   AppService.name,
                 );
               });
-          } else if (
-            (await validateServiceProvider(element.attributes.mobile)) ==
-            SERVICE_PROVIDERS.MOBITEL
-          ) {
-            const response = await axios(MSPACE_PAYMENT_URL, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                Accept: 'application/json',
-              },
-              data: {
-                applicationId: MSPACE_APPID,
-                externalTrxId: `${generateNumber(11)}`,
-                subscriberId: `tel:${mobileGeneratorWithOutPlus(
-                  element.attributes.mobile,
-                )}`,
-                paymentInstrumentName: 'Mobile Account',
-                amount: '1',
-                currency: 'LKR',
-              },
-            });
-          }
+          } 
+          // else if (
+          //   (await validateServiceProvider(element.attributes.mobile)) ==
+          //   SERVICE_PROVIDERS.MOBITEL
+          // ) {
+          //   const response = await axios(MSPACE_PAYMENT_URL, {
+          //     method: 'POST',
+          //     headers: {
+          //       'Content-Type': 'application/json',
+          //       Accept: 'application/json',
+          //     },
+          //     data: {
+          //       applicationId: MSPACE_APPID,
+          //       externalTrxId: `${generateNumber(11)}`,
+          //       subscriberId: `tel:${mobileGeneratorWithOutPlus(
+          //         element.attributes.mobile,
+          //       )}`,
+          //       paymentInstrumentName: 'Mobile Account',
+          //       amount: '1',
+          //       currency: 'LKR',
+          //     },
+          //   });
+          // }
         };
 
         const processUsersWithDelay = async () => {
