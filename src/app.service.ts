@@ -469,25 +469,26 @@ export class AppService {
             await this.unsubscribeFullUser(mobileDTO);
           }
         });
-      } else if (
-        (await validateServiceProvider(dto.mobile)) == SERVICE_PROVIDERS.MOBITEL
-      ) {
-        const response = await axios(MSPACE_PAYMENT_URL, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Accept: 'application/json',
-          },
-          data: {
-            applicationId: MSPACE_APPID,
-            externalTrxId: `${generateNumber(11)}`,
-            subscriberId: `tel:${mobileGeneratorWithOutPlus(dto.mobile)}`,
-            paymentInstrumentName: 'Mobile Account',
-            amount: '1',
-            currency: 'LKR',
-          },
-        });
-      }
+      } 
+      // else if (
+      //   (await validateServiceProvider(dto.mobile)) == SERVICE_PROVIDERS.MOBITEL
+      // ) {
+      //   const response = await axios(MSPACE_PAYMENT_URL, {
+      //     method: 'POST',
+      //     headers: {
+      //       'Content-Type': 'application/json',
+      //       Accept: 'application/json',
+      //     },
+      //     data: {
+      //       applicationId: MSPACE_APPID,
+      //       externalTrxId: `${generateNumber(11)}`,
+      //       subscriberId: `tel:${mobileGeneratorWithOutPlus(dto.mobile)}`,
+      //       paymentInstrumentName: 'Mobile Account',
+      //       amount: '1',
+      //       currency: 'LKR',
+      //     },
+      //   });
+      // }
 
       return 'Succefully Subscribed';
     } catch (e) {
