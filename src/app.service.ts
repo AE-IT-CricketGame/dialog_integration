@@ -545,6 +545,7 @@ export class AppService {
         });
       }
     } catch (e) {
+      console.log(e)
       if (e.response.data.message) {
         return e.response.data.message;
       }
