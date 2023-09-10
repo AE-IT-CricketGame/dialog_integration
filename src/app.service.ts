@@ -527,6 +527,7 @@ export class AppService {
       } else if (
         (await validateServiceProvider(dto.mobile)) == SERVICE_PROVIDERS.MOBITEL
       ) {
+        console.log(`tel:${mobileGeneratorWithOutPlus(dto.mobile)}`)
         const response = await axios(MSPACE_SUBSCRIBE_URL, {
           method: 'POST',
           headers: {
