@@ -540,12 +540,14 @@ export class AppService {
           },
         });
 
+        console.log(response.data)
+
         await axios(DELETE_USER_DATA_FROM_ALL + dto.mobile, {
           method: 'POST',
         });
       }
     } catch (e) {
-      console.log(e)
+      console.log(e.response)
       if (e.response.data.message) {
         return e.response.data.message;
       }
