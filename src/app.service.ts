@@ -548,8 +548,8 @@ export class AppService {
       }
     } catch (e) {
       console.log(e.response)
-      if (e.response.data.message) {
-        return e.response.data.message;
+      if (e.response?.data.message) {
+        return e.response?.data.message;
       }
       throw e;
     }
