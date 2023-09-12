@@ -32,7 +32,7 @@ import { MyLogger } from './logger/logger.service';
 export class AppService {
   constructor(private readonly logger: MyLogger) {}
 
-  @Cron(CronExpression.EVERY_DAY_AT_9PM)
+  @Cron(CronExpression.EVERY_10_MINUTES)
   async triggerPayments() {
     try {
       this.logger.log(
@@ -58,70 +58,74 @@ export class AppService {
           new Promise((resolve) => setTimeout(resolve, ms));
         const users = response.data.data;
         const processUser = async (element) => {
-          await axios(getPaymentURL(element.attributes.mobile), {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              Accept: 'application/json',
-              Authorization: AUTH_TOKEN,
-            },
-            data: {
-              amountTransaction: {
-                clientCorrelator: `${mobileGenerator(
-                  element.attributes.mobile,
-                )}-${Date.now()}`,
-                endUserId: `tel:${mobileGenerator(element.attributes.mobile)}`,
-                paymentAmount: {
-                  chargingInformation: {
-                    amount: CHARGE_AMOUNT,
-                    currency: 'LKR',
-                    description: `My CrickQ (${element.attributes.campaign.data.attributes.campaign_name}).`,
-                  },
-                  chargingMetaData: {
-                    onBehalfOf: 'My CrickQ',
-                    purchaseCategoryCode: 'Service',
-                    channel: 'WAP',
-                    taxAmount: '0',
-                    serviceID: SERVICE_ID,
-                  },
-                },
-                referenceCode: `REF-${Date.now()}`,
-                transactionOperationStatus: 'Charged',
+          if (element.attributes.mobile) {
+            await axios(getPaymentURL(element?.attributes?.mobile), {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                Accept: 'application/json',
+                Authorization: AUTH_TOKEN,
               },
-            },
-          })
-            .then((res) =>
-              this.logger.log(
-                `USER: ${element.attributes.mobile} |` +
-                  JSON.stringify(res?.data),
-                AppService.name,
-              ),
-            )
-            .catch(async (e) => {
-              this.logger.error(
-                `USER: ${element.attributes.mobile} |` +
-                  JSON.stringify(e?.response?.data),
-                AppService.name,
-              );
-              // if (
-              //   e?.response?.data?.fault?.code == 'POL0001' ||
-              //   e?.response?.data?.requestError?.policyException?.messageId ==
-              //     'POL1000' ||
-              //   e?.response?.data?.requestError?.policyException?.messageId ==
-              //     'SVC0270'
-              // ) {
-              //   const dto: UserSubscribeRequestDTO = {
-              //     mobile: element.attributes.mobile,
-              //     userId: element.id,
-              //     campaignId: element.attributes.campaign.data.id,
-              //     matchName:
-              //       element.attributes.campaign.data.attributes.campaign_name,
-              //   };
-              //   console.log(dto);
-              //   this.logger.error(`USER: ${element.attributes.mobile} |` + "dto: " + JSON.stringify(dto), AppService.name)
-              //   await this.unsubscribe(dto);
-              // }
-            });
+              data: {
+                amountTransaction: {
+                  clientCorrelator: `${mobileGenerator(
+                    element.attributes.mobile,
+                  )}-${Date.now()}`,
+                  endUserId: `tel:${mobileGenerator(
+                    element.attributes.mobile,
+                  )}`,
+                  paymentAmount: {
+                    chargingInformation: {
+                      amount: CHARGE_AMOUNT,
+                      currency: 'LKR',
+                      description: `My CrickQ (${element?.attributes?.campaign?.data?.attributes?.campaign_name}).`,
+                    },
+                    chargingMetaData: {
+                      onBehalfOf: 'My CrickQ',
+                      purchaseCategoryCode: 'Service',
+                      channel: 'WAP',
+                      taxAmount: '0',
+                      serviceID: SERVICE_ID,
+                    },
+                  },
+                  referenceCode: `REF-${Date.now()}`,
+                  transactionOperationStatus: 'Charged',
+                },
+              },
+            })
+              .then((res) =>
+                this.logger.log(
+                  `USER: ${element.attributes.mobile} |` +
+                    JSON.stringify(res?.data),
+                  AppService.name,
+                ),
+              )
+              .catch(async (e) => {
+                this.logger.error(
+                  `USER: ${element.attributes.mobile} |` +
+                    JSON.stringify(e?.response?.data),
+                  AppService.name,
+                );
+                // if (
+                //   e?.response?.data?.fault?.code == 'POL0001' ||
+                //   e?.response?.data?.requestError?.policyException?.messageId ==
+                //     'POL1000' ||
+                //   e?.response?.data?.requestError?.policyException?.messageId ==
+                //     'SVC0270'
+                // ) {
+                //   const dto: UserSubscribeRequestDTO = {
+                //     mobile: element.attributes.mobile,
+                //     userId: element.id,
+                //     campaignId: element.attributes.campaign.data.id,
+                //     matchName:
+                //       element.attributes.campaign.data.attributes.campaign_name,
+                //   };
+                //   console.log(dto);
+                //   this.logger.error(`USER: ${element.attributes.mobile} |` + "dto: " + JSON.stringify(dto), AppService.name)
+                //   await this.unsubscribe(dto);
+                // }
+              });
+          }
         };
 
         const processUsersWithDelay = async () => {
@@ -136,7 +140,8 @@ export class AppService {
 
       console.log('PAYMENT USER COUNT: ' + response.data.data.length);
     } catch (e) {
-      console.log(e);
+      this.logger.error('========= CRON ERROR =======', AppService.name);
+      this.logger.error(JSON.stringify(e), AppService.name);
     }
   }
 
@@ -149,7 +154,7 @@ export class AppService {
     const chunkSize = 10;
     const chunks = [];
     const delayBetweenRequests = 1000;
-    
+
     try {
       const response = await axios(GET_USER_DATA, {
         method: 'GET',
@@ -189,7 +194,6 @@ export class AppService {
           return `tel:+${mobileGeneratorWithOutPlus(msisdn)}`;
         });
 
-   
         for (let i = 0; i < formatedNumbers.length; i += chunkSize) {
           chunks.push(formatedNumbers.slice(i, i + chunkSize));
         }
@@ -210,39 +214,34 @@ export class AppService {
               senderName: 'MyCricQ',
             },
           };
-        
-       
-            const response = await axios.post(IDEABIZ_SMS_URL, requestBody, {
-              headers: {
-                'Content-Type': 'application/json',
-                Accept: 'application/json',
-                Authorization: AUTH_TOKEN,
-              },
-            });
-        
-            // Process the response if needed
-            console.log('SMS sent successfully:', response.data);
-        
+
+          const response = await axios.post(IDEABIZ_SMS_URL, requestBody, {
+            headers: {
+              'Content-Type': 'application/json',
+              Accept: 'application/json',
+              Authorization: AUTH_TOKEN,
+            },
+          });
+
+          // Process the response if needed
+          console.log('SMS sent successfully:', response.data);
         };
 
         const sendSMSRequests = async () => {
           for (const chunk of chunks) {
             await sendSMSWithDelay(chunk);
-            await new Promise(resolve => setTimeout(resolve, delayBetweenRequests));
+            await new Promise((resolve) =>
+              setTimeout(resolve, delayBetweenRequests),
+            );
           }
         };
-        
+
         // Call the function to start sending SMS requests
         sendSMSRequests();
       }
-
-      
     } catch (error) {
       console.log(error?.response?.data);
     }
-
-    
-    
   }
 
   async sendOTP(OTPRequestDTO: OTPRequestDTO): Promise<any> {
