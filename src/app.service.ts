@@ -387,14 +387,14 @@ export class AppService {
           },
         });
         this.logger.log(
-          '==== VERIFY MOBITEL ====' + response.data,
+          '==== VERIFY MOBITEL ====' + JSON.stringify(response.data),
           AppService.name,
         );
         return response;
       }
     } catch (e) {
       this.logger.error(
-        '==== VERIFY OTP MOBITEL ====' + e?.response,
+        '==== VERIFY OTP MOBITEL ====' + JSON.stringify(e?.response),
         AppService.name,
       );
       throw e;
