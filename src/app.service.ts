@@ -463,6 +463,7 @@ export class AppService {
           } else if (e?.response?.data?.fault?.code == 'POL0001') {
             const mobileDTO: MobileDTO = {
               mobile: dto.mobile,
+              serverRef: dto?.serverRef
             };
 
             await this.unsubscribeFullUser(mobileDTO);

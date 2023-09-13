@@ -15,5 +15,8 @@ export class UserSubscribeRequestDTO {
     @IsOptional()
     matchName: string;
 
+    @IsOptional()
+    serverRef: string;
+
 }
 
