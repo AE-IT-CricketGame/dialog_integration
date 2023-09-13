@@ -6,5 +6,8 @@ export class MobileDTO {
     @IsNotEmpty()
     mobile: string;
 
+    @IsOptional()
+    serverRef: string;
+
 }
 
