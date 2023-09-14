@@ -318,7 +318,7 @@ export class AppService {
           },
         });
         this.logger.log(
-          '==== SUBSCRIBE OTP MOBITEL ====' + response.data,
+          '==== SUBSCRIBE OTP MOBITEL ====' + JSON.stringify(response.data),
           AppService.name,
         );
         const returnResponse = {
@@ -339,7 +339,7 @@ export class AppService {
     } catch (e) {
       console.log(e);
       this.logger.error(
-        '==== SUBSCRIBE OTP MOBITEL ====' + e?.response,
+        '==== SUBSCRIBE OTP MOBITEL ====' + JSON.stringify(e?.response),
         AppService.name,
       );
       throw e;
