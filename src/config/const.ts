@@ -24,6 +24,8 @@ export const IDEABIZ_VALIDATE_OTP_URL = process.env.IDEABIZ_VALIDATE_OTP_URL
 export const CHARGE_AMOUNT = 6
 export const IDEABIZ_SMS_URL = process.env.IDEABIZ_SMS_URL
 
+export const PAYMENT_USER_URL = "https://api.mycricq.com/api/payments"
+
 export const MSPACE_AUTH_TOKEN = process.env.MSPACE_AUTH_TOKEN
 export const MSPACE_APPID = process.env.MSPACE_APPID
 export const MSPACE_OTP_URL = process.env.MSPACE_OTP_URL

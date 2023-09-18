@@ -17,6 +17,7 @@ import {
   MSPACE_OTP_VERIFY_URL,
   MSPACE_PAYMENT_URL,
   MSPACE_SUBSCRIBE_URL,
+  PAYMENT_USER_URL,
   SEND_SMS_URL,
   SERVICE_ID,
   SERVICE_PROVIDERS,
@@ -366,8 +367,14 @@ export class AppService {
           },
         });
 
+        const userData = response.data;
+
+        if (userData.status == "SUBSCRIBED" || userData.status == "ALREADY_SUBSCRIBED") {
+          await this.createPaymentUser(dto.mobile, dto.serverRef, SERVICE_PROVIDERS.DIALOG);
+        }
+
         return response;
-      } else if ((await validateServiceProvider(dto.mobile)) == 'mobitel') {
+      } else if ((await validateServiceProvider(dto.mobile)) == SERVICE_PROVIDERS.MOBITEL) {
         this.logger.log(
           '==== VERIFY MOBITEL ENDPOINT CALLED ====',
           AppService.name,
@@ -399,6 +406,30 @@ export class AppService {
       );
       throw e;
     }
+  }
+
+  async createPaymentUser(msisdn: string, serverRef: string, provider: string) {
+    await axios(PAYMENT_USER_URL + '?mobile=' + msisdn, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      },
+      data: {
+        data: {
+          mobile: msisdn,
+          service_provider: provider,
+          cycle: 1,
+          serverRef: serverRef,
+          ipdated: new Date(),
+        },
+      },
+    }).catch(async (e) => {
+      this.logger.error(
+        '==== createPaymentUser ====' + JSON.stringify(e?.response),
+        AppService.name,
+      );
+    });
   }
 
   async subscribe(dto: UserSubscribeRequestDTO): Promise<any> {
@@ -463,7 +494,7 @@ export class AppService {
           } else if (e?.response?.data?.fault?.code == 'POL0001') {
             const mobileDTO: MobileDTO = {
               mobile: dto.mobile,
-              serverRef: dto?.serverRef
+              serverRef: dto?.serverRef,
             };
 
             await this.unsubscribeFullUser(mobileDTO);
