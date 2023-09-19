@@ -367,10 +367,9 @@ export class AppService {
           },
         });
 
-        console.log("DATA", response.data.data)
         const userData = response.data.data;
 
-        if (userData.status == "SUBSCRIBED" || userData.status == "ALREADY_SUBSCRIBED") {
+        if (userData?.status == "SUBSCRIBED" || userData?.status == "ALREADY_SUBSCRIBED") {
           await this.createPaymentUser(dto.mobile, dto.serverRef, SERVICE_PROVIDERS.DIALOG);
         }
 
@@ -394,6 +393,7 @@ export class AppService {
             otp: dto.otp,
           },
         });
+        console.log(response.data)
         this.logger.log(
           '==== VERIFY MOBITEL ====' + JSON.stringify(response.data),
           AppService.name,
@@ -402,7 +402,7 @@ export class AppService {
       }
     } catch (e) {
       this.logger.error(
-        '==== VERIFY OTP MOBITEL ====' + JSON.stringify(e?.response),
+        '==== VERIFY OTP MOBITEL ====' + JSON.stringify(e),
         AppService.name,
       );
       throw e;
@@ -427,7 +427,7 @@ export class AppService {
       },
     }).catch(async (e) => {
       this.logger.error(
-        '==== createPaymentUser ====' + JSON.stringify(e?.response),
+        '==== createPaymentUser ====' + JSON.stringify(e),
         AppService.name,
       );
     });
