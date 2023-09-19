@@ -322,6 +322,14 @@ export class AppService {
           '==== SUBSCRIBE OTP MOBITEL ====' + JSON.stringify(response.data),
           AppService.name,
         );
+        // if (response.data?.statusCode == 'E1351') {
+        //   await this.createPaymentUser(
+        //     dto.mobile,
+        //     response.data.subscriberId,
+        //     SERVICE_PROVIDERS.MOBITEL,
+        //   );
+        // }
+
         const returnResponse = {
           data: {
             ...response.data,
@@ -369,12 +377,21 @@ export class AppService {
 
         const userData = response.data.data;
 
-        if (userData?.status == "SUBSCRIBED" || userData?.status == "ALREADY_SUBSCRIBED") {
-          await this.createPaymentUser(dto.mobile, dto.serverRef, SERVICE_PROVIDERS.DIALOG);
+        if (
+          userData?.status == 'SUBSCRIBED' ||
+          userData?.status == 'ALREADY_SUBSCRIBED'
+        ) {
+          await this.createPaymentUser(
+            dto.mobile,
+            dto.serverRef,
+            SERVICE_PROVIDERS.DIALOG,
+          );
         }
 
         return response;
-      } else if ((await validateServiceProvider(dto.mobile)) == SERVICE_PROVIDERS.MOBITEL) {
+      } else if (
+        (await validateServiceProvider(dto.mobile)) == SERVICE_PROVIDERS.MOBITEL
+      ) {
         this.logger.log(
           '==== VERIFY MOBITEL ENDPOINT CALLED ====',
           AppService.name,
@@ -393,7 +410,15 @@ export class AppService {
             otp: dto.otp,
           },
         });
-        console.log(response.data)
+        console.log(response.data);
+
+        if (response.data.statusCode == 'S1000') {
+          await this.createPaymentUser(
+            dto.mobile,
+            response.data.subscriberId,
+            SERVICE_PROVIDERS.MOBITEL,
+          );
+        }
         this.logger.log(
           '==== VERIFY MOBITEL ====' + JSON.stringify(response.data),
           AppService.name,
