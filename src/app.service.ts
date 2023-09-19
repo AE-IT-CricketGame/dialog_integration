@@ -580,6 +580,10 @@ export class AppService {
           await axios(DELETE_USER_DATA_FROM_ALL + dto.mobile, {
             method: 'POST',
           });
+
+          await axios(PAYMENT_USER_URL + '?mobile=' +dto.mobile, {
+            method: 'DELETE',
+          });
         }
       } else if (
         (await validateServiceProvider(dto.mobile)) == SERVICE_PROVIDERS.MOBITEL
@@ -603,6 +607,10 @@ export class AppService {
 
         await axios(DELETE_USER_DATA_FROM_ALL + dto.mobile, {
           method: 'POST',
+        });
+
+        await axios(PAYMENT_USER_URL + '?mobile=' +dto.mobile, {
+          method: 'DELETE',
         });
       }
     } catch (e) {
