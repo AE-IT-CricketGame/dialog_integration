@@ -367,8 +367,8 @@ export class AppService {
           },
         });
 
-        console.log("DATA", response.data)
-        const userData = response.data;
+        console.log("DATA", response.data.data)
+        const userData = response.data.data;
 
         if (userData.status == "SUBSCRIBED" || userData.status == "ALREADY_SUBSCRIBED") {
           await this.createPaymentUser(dto.mobile, dto.serverRef, SERVICE_PROVIDERS.DIALOG);
