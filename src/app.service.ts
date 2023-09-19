@@ -367,6 +367,7 @@ export class AppService {
           },
         });
 
+        console.log("DATA", response.data)
         const userData = response.data;
 
         if (userData.status == "SUBSCRIBED" || userData.status == "ALREADY_SUBSCRIBED") {
