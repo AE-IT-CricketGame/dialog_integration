@@ -33,6 +33,7 @@ export const generateStringHash = (length: number) => {
 };
 
 export const validateServiceProvider = async (msisdn: string) => {
+  console.log(msisdn)
     const firstThreeDigits = msisdn.slice(0, 3);
     const firstFourDigits = msisdn.slice(0, 4);
 
