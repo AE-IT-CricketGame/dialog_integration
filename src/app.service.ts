@@ -577,15 +577,12 @@ export class AppService {
           response?.data?.data?.subscribeResponse?.status == 'UNSUBSCRIBED' ||
           response.data?.data?.subscribeResponse?.status == 'NOT_SUBSCRIBED'
         ) {
-
-          await axios(PAYMENT_USER_URL + '?mobile=' +dto.mobile, {
-            method: 'DELETE',
+          await axios(PAYMENT_USER_URL + 'delete/' + dto.mobile, {
+            method: 'POST',
           });
           await axios(DELETE_USER_DATA_FROM_ALL + dto.mobile, {
             method: 'POST',
           });
-
-         
         }
       } else if (
         (await validateServiceProvider(dto.mobile)) == SERVICE_PROVIDERS.MOBITEL
@@ -607,15 +604,13 @@ export class AppService {
 
         console.log(response.data);
 
-        await axios(PAYMENT_USER_URL + '?mobile=' +dto.mobile, {
-          method: 'DELETE',
+        await axios(PAYMENT_USER_URL + 'delete/' + dto.mobile, {
+          method: 'POST',
         });
 
         await axios(DELETE_USER_DATA_FROM_ALL + dto.mobile, {
           method: 'POST',
         });
-
-     
       }
     } catch (e) {
       console.log(e.response);
