@@ -445,7 +445,7 @@ export class AppService {
         data: {
           mobile: msisdn,
           service_provider: provider,
-          cycle: 1,
+          cycle: 0,
           serverRef: serverRef,
           ipdated: new Date(),
         },
