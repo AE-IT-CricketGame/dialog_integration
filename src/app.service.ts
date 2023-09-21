@@ -43,13 +43,333 @@ import { MyLogger } from './logger/logger.service';
 export class AppService {
   constructor(private readonly logger: MyLogger) {}
 
-  @Cron(CronExpression.EVERY_DAY_AT_9PM)
+  @Cron("51 23 * * *")
+  async triggerPaymentsFirstCycle() {
+    const response: any = await this.getPaymentUserByCycle(1);
+    const paymentUserData = response?.data?.data;
+    
+    if (paymentUserData?.length == 0) {
+      this.logger.log(
+        '==== TRIGERRING CHARGES FOR USERS (1st Cycle): NO DATA =====',
+        AppService.name,
+      );
+      return;
+    }
+
+    this.logger.log(
+      '==== TRIGERRING CHARGES FOR USERS (1st Cycle) =====',
+      AppService.name,
+    );
+
+    const delay = (ms: number) =>
+      new Promise((resolve) => setTimeout(resolve, ms));
+    const users = response.data.data;
+    const processUser = async (element) => {
+      if (element?.attributes?.mobile) {
+        if (
+          (await validateServiceProvider(element.attributes.mobile)) ==
+          SERVICE_PROVIDERS.DIALOG
+        ) {
+          await axios(getPaymentURL(element?.attributes?.mobile), {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Accept: 'application/json',
+              Authorization: AUTH_TOKEN,
+            },
+            data: {
+              amountTransaction: {
+                clientCorrelator: `${mobileGenerator(
+                  element.attributes.mobile,
+                )}-${Date.now()}`,
+                endUserId: `tel:${mobileGenerator(element.attributes.mobile)}`,
+                paymentAmount: {
+                  chargingInformation: {
+                    amount: CHARGE_AMOUNT,
+                    currency: 'LKR',
+                    description: `My CrickQ (cycle ${element?.attributes?.cycle}).`,
+                  },
+                  chargingMetaData: {
+                    onBehalfOf: 'My CrickQ',
+                    purchaseCategoryCode: 'Service',
+                    channel: 'WAP',
+                    taxAmount: '0',
+                    serviceID: SERVICE_ID,
+                  },
+                },
+                referenceCode: `REF-${Date.now()}`,
+                transactionOperationStatus: 'Charged',
+              },
+            },
+          })
+            .then((res) =>
+              this.logger.log(
+                `USER (1st Cycle): ${element?.attributes?.mobile} |` +
+                  JSON.stringify(res?.data),
+                AppService.name,
+              ),
+            )
+            .catch(async (e) => {
+              this.logger.error(
+                `USER (1st Cycle): ${element.attributes.mobile} |` +
+                  JSON.stringify(e?.response?.data),
+                AppService.name,
+              );
+
+              await this.updatePaymentUser(element?.attributes?.mobile, 2);
+            });
+        }
+      }
+    };
+
+    const processUsersWithDelay = async () => {
+      for (const element of users) {
+        await processUser(element);
+        await delay(1000); // Adding a 1-second delay
+      }
+    };
+
+    processUsersWithDelay();
+  }
+
+  @Cron("39 23 * * *")
+  async triggerPaymentsSecondCycle() {
+    const response: any = await this.getPaymentUserByCycle(2);
+    const paymentUserData = response?.data?.data;
+
+    if (paymentUserData?.length == 0) {
+      this.logger.log(
+        '==== TRIGERRING CHARGES FOR USERS (2nd Cycle): NO DATA =====',
+        AppService.name,
+      );
+      return;
+    }
+
+    this.logger.log(
+      '==== TRIGERRING CHARGES FOR USERS (2nd Cycle) =====',
+      AppService.name,
+    );
+    const delay = (ms: number) =>
+      new Promise((resolve) => setTimeout(resolve, ms));
+    const users = response.data.data;
+    const processUser = async (element) => {
+      if (element.attributes.mobile) {
+        if (
+          (await validateServiceProvider(element.attributes.mobile)) ==
+          SERVICE_PROVIDERS.DIALOG
+        ) {
+          await axios(getPaymentURL(element?.attributes?.mobile), {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Accept: 'application/json',
+              Authorization: AUTH_TOKEN,
+            },
+            data: {
+              amountTransaction: {
+                clientCorrelator: `${mobileGenerator(
+                  element.attributes.mobile,
+                )}-${Date.now()}`,
+                endUserId: `tel:${mobileGenerator(element.attributes.mobile)}`,
+                paymentAmount: {
+                  chargingInformation: {
+                    amount: CHARGE_AMOUNT,
+                    currency: 'LKR',
+                    description: `My CrickQ (cycle ${element?.attributes?.cycle}).`,
+                  },
+                  chargingMetaData: {
+                    onBehalfOf: 'My CrickQ',
+                    purchaseCategoryCode: 'Service',
+                    channel: 'WAP',
+                    taxAmount: '0',
+                    serviceID: SERVICE_ID,
+                  },
+                },
+                referenceCode: `REF-${Date.now()}`,
+                transactionOperationStatus: 'Charged',
+              },
+            },
+          })
+            .then((res) =>
+              this.logger.log(
+                `USER (2nd Cycle): ${element.attributes.mobile} |` +
+                  JSON.stringify(res?.data),
+                AppService.name,
+              ),
+            )
+            .catch(async (e) => {
+              this.logger.error(
+                `USER (2nd Cycle): ${element.attributes.mobile} |` +
+                  JSON.stringify(e?.response?.data),
+                AppService.name,
+              );
+
+              await this.updatePaymentUser(element.attributes.mobile, 3);
+            });
+        }
+      }
+    };
+
+    const processUsersWithDelay = async () => {
+      for (const element of users) {
+        await processUser(element);
+        await delay(1000); // Adding a 1-second delay
+      }
+    };
+
+    processUsersWithDelay();
+  }
+
+  @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
+  async triggerPaymentsTHirdCycle() {
+    const response: any = await this.getPaymentUserByCycle(3);
+    const paymentUserData = response?.data?.data;
+
+    if (paymentUserData?.length == 0) {
+      this.logger.log(
+        '==== TRIGERRING CHARGES FOR USERS (3rd Cycle): NO DATA =====',
+        AppService.name,
+      );
+      return;
+    }
+    this.logger.log(
+      '==== TRIGERRING CHARGES FOR USERS (3rd Cycle) =====',
+      AppService.name,
+    );
+    const delay = (ms: number) =>
+      new Promise((resolve) => setTimeout(resolve, ms));
+    const users = response.data.data;
+    const processUser = async (element) => {
+      if (element.attributes.mobile) {
+        if (
+          (await validateServiceProvider(element.attributes.mobile)) ==
+          SERVICE_PROVIDERS.DIALOG
+        ) {
+          await axios(getPaymentURL(element?.attributes?.mobile), {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Accept: 'application/json',
+              Authorization: AUTH_TOKEN,
+            },
+            data: {
+              amountTransaction: {
+                clientCorrelator: `${mobileGenerator(
+                  element.attributes.mobile,
+                )}-${Date.now()}`,
+                endUserId: `tel:${mobileGenerator(element.attributes.mobile)}`,
+                paymentAmount: {
+                  chargingInformation: {
+                    amount: CHARGE_AMOUNT,
+                    currency: 'LKR',
+                    description: `My CrickQ (cycle ${element?.attributes?.cycle}).`,
+                  },
+                  chargingMetaData: {
+                    onBehalfOf: 'My CrickQ',
+                    purchaseCategoryCode: 'Service',
+                    channel: 'WAP',
+                    taxAmount: '0',
+                    serviceID: SERVICE_ID,
+                  },
+                },
+                referenceCode: `REF-${Date.now()}`,
+                transactionOperationStatus: 'Charged',
+              },
+            },
+          })
+            .then((res) =>
+              this.logger.log(
+                `USER: ${element.attributes.mobile} |` +
+                  JSON.stringify(res?.data),
+                AppService.name,
+              ),
+            )
+            .catch(async (e) => {
+              this.logger.error(
+                `USER: ${element.attributes.mobile} |` +
+                  JSON.stringify(e?.response?.data),
+                AppService.name,
+              );
+
+              await this.updatePaymentUser(element.attributes.mobile, 4);
+            });
+        }
+      }
+    };
+
+    const processUsersWithDelay = async () => {
+      for (const element of users) {
+        await processUser(element);
+        await delay(1000); // Adding a 1-second delay
+      }
+    };
+
+    processUsersWithDelay();
+  }
+
+  // @Cron(CronExpression.EVERY_30_MINUTES)
+  // async updatePaymetUsers() {
+  //   try {
+  //   const response = await axios(GET_USER_DATA, {
+  //     method: 'GET',
+  //     headers: {
+  //       'Content-Type': 'application/json',
+  //       Accept: 'application/json',
+  //     },
+  //   });
+
+  //   if (response.data.data.length != 0) {
+  //     const delay = (ms: number) =>
+  //       new Promise((resolve) => setTimeout(resolve, ms));
+  //     const users = response.data.data;
+  //     const processUser = async (element) => {
+  //       if (element.attributes.mobile) {
+  //         await this.createPaymentUser(
+  //           element.attributes.mobile,
+  //           '',
+  //           await validateServiceProvider(element.attributes.mobile),
+  //         );
+  //       }
+  //     };
+
+  //     const processUsersWithDelay = async () => {
+  //       for (const element of users) {
+  //         await processUser(element);
+  //         await delay(1000); // Adding a 1-second delay
+  //       }
+  //     };
+
+  //     processUsersWithDelay();
+  //   }
+  // } catch (e) {
+  //   console.log(e)
+  // }
+  // }
+
+  @Cron(CronExpression.EVERY_DAY_AT_3AM)
+  async clearCycles() {
+    try {
+      this.logger.log('==== CLEAR CYCLES =====', AppService.name);
+      await axios(PAYMENT_USER_URL + '/cycle/delete', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        }
+      });
+    } catch (e) {
+      this.logger.error(JSON.stringify(e), AppService.name);
+    }
+  }
+
+  @Cron(CronExpression.EVERY_DAY_AT_6AM)
   async triggerPayments() {
     try {
       this.logger.log(
         '==== TRIGERRING CHARGES FOR USERS =====',
         AppService.name,
       );
+
       const response = await axios(GET_USER_DATA, {
         method: 'GET',
         headers: {
@@ -69,7 +389,13 @@ export class AppService {
           new Promise((resolve) => setTimeout(resolve, ms));
         const users = response.data.data;
         const processUser = async (element) => {
-          if (element.attributes.mobile) {
+          const paymentUserData: any = await this.getPaymentUser(
+            element.attributes.mobile,
+          );
+          if (
+            element.attributes.mobile &&
+            paymentUserData?.data?.data.length != 0
+          ) {
             if (
               (await validateServiceProvider(element.attributes.mobile)) ==
               SERVICE_PROVIDERS.DIALOG
@@ -121,6 +447,8 @@ export class AppService {
                       JSON.stringify(e?.response?.data),
                     AppService.name,
                   );
+
+                  await this.updatePaymentUser(element.attributes.mobile, 1);
                   // if (
                   //   e?.response?.data?.fault?.code == 'POL0001' ||
                   //   e?.response?.data?.requestError?.policyException?.messageId ==
@@ -453,6 +781,54 @@ export class AppService {
     }).catch(async (e) => {
       this.logger.error(
         '==== createPaymentUser ====' + JSON.stringify(e),
+        AppService.name,
+      );
+    });
+  }
+
+  async getPaymentUser(msisdn: string) {
+    return await axios(PAYMENT_USER_URL + '?filters[mobile][$eq]=' + msisdn, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      },
+    }).catch(async (e) => {
+      this.logger.error(
+        '==== getPaymentUser ====' + JSON.stringify(e),
+        AppService.name,
+      );
+    });
+  }
+
+  async getPaymentUserByCycle(cycle: number) {
+    return await axios(PAYMENT_USER_URL + '?filters[cycle][$eq]=' + cycle, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      },
+    }).catch(async (e) => {
+      this.logger.error(
+        '==== getPaymentUser ====' + JSON.stringify(e),
+        AppService.name,
+      );
+    });
+  }
+
+  async updatePaymentUser(msisdn: string, cycle: number) {
+    await axios(
+      PAYMENT_USER_URL + '/update?mobile=' + msisdn + '&cycle=' + cycle,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        }
+      },
+    ).catch(async (e) => {
+      this.logger.error(
+        '==== updatePaymentUser ====' + JSON.stringify(e),
         AppService.name,
       );
     });
