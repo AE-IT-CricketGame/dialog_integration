@@ -43,7 +43,7 @@ import { MyLogger } from './logger/logger.service';
 export class AppService {
   constructor(private readonly logger: MyLogger) {}
 
-  @Cron("51 23 * * *")
+  @Cron(CronExpression.EVERY_DAY_AT_NOON)
   async triggerPaymentsFirstCycle() {
     const response: any = await this.getPaymentUserByCycle(1);
     const paymentUserData = response?.data?.data;
@@ -132,7 +132,7 @@ export class AppService {
     processUsersWithDelay();
   }
 
-  @Cron("39 23 * * *")
+  @Cron(CronExpression.EVERY_DAY_AT_6PM)
   async triggerPaymentsSecondCycle() {
     const response: any = await this.getPaymentUserByCycle(2);
     const paymentUserData = response?.data?.data;
