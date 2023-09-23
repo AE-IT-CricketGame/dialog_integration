@@ -362,7 +362,7 @@ export class AppService {
     }
   }
 
-  @Cron("15 00 * * *")
+  @Cron(CronExpression.EVERY_DAY_AT_6AM)
   async triggerPayments() {
     try {
       this.logger.log(
