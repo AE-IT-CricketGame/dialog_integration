@@ -219,8 +219,8 @@ export class AppService {
 
     processUsersWithDelay();
   }
-
-  @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
+  //"07 00 * * *"
+  @Cron("15 00 * * *")
   async triggerPaymentsTHirdCycle() {
     const response: any = await this.getPaymentUserByCycle(3);
     const paymentUserData = response?.data?.data;
