@@ -817,6 +817,7 @@ export class AppService {
   }
 
   async updatePaymentUser(msisdn: string, cycle: number) {
+    try {
     await axios(
       PAYMENT_USER_URL + '/update?mobile=' + msisdn + '&cycle=' + cycle,
       {
@@ -826,12 +827,19 @@ export class AppService {
           Accept: 'application/json',
         }
       },
-    ).catch(async (e) => {
-      this.logger.error(
-        '==== updatePaymentUser ====' + JSON.stringify(e),
-        AppService.name,
-      );
-    });
+    )
+
+    this.logger.log(
+      '==== updatePaymentUser ====' + msisdn,
+      AppService.name,
+    );
+
+  } catch (e) {
+    this.logger.error(
+      '==== updatePaymentUser ====' + JSON.stringify(e),
+      AppService.name,
+    );
+  }
   }
 
   async subscribe(dto: UserSubscribeRequestDTO): Promise<any> {
