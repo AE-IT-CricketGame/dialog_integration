@@ -39,7 +39,7 @@ export const validateServiceProvider = async (msisdn: string) => {
 
     if (firstThreeDigits === "071" || firstThreeDigits === "070" || firstFourDigits === "9471" || firstFourDigits === "9470") {
       return SERVICE_PROVIDERS.MOBITEL;
-    } else if (firstThreeDigits === "077" || firstThreeDigits === "076" || firstFourDigits === "9477" || firstFourDigits === "9476") {
+    } else if (firstThreeDigits === "077" || firstThreeDigits === "076" || firstFourDigits === "9477" || firstFourDigits === "9476" || firstFourDigits === "9474" || firstFourDigits === "074") {
       return SERVICE_PROVIDERS.DIALOG;
     } else {
         return "Other"
