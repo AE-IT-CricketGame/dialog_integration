@@ -377,8 +377,7 @@ export class AppService {
           Accept: 'application/json',
         },
       });
-      this.logger.log('==== ALL USERS FROM DB =====', AppService.name);
-      this.logger.log(JSON.stringify(response.data.data), AppService.name);
+
       this.logger.log(
         'User Count: ' + JSON.stringify(response.data.data.length),
         AppService.name,
