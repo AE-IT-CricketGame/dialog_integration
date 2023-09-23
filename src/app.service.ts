@@ -220,7 +220,7 @@ export class AppService {
     processUsersWithDelay();
   }
   //"07 00 * * *"
-  @Cron("15 00 * * *")
+  @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
   async triggerPaymentsTHirdCycle() {
     const response: any = await this.getPaymentUserByCycle(3);
     const paymentUserData = response?.data?.data;
@@ -362,7 +362,7 @@ export class AppService {
     }
   }
 
-  @Cron(CronExpression.EVERY_DAY_AT_6AM)
+  @Cron("15 00 * * *")
   async triggerPayments() {
     try {
       this.logger.log(
