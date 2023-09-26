@@ -47,7 +47,7 @@ export class AppService {
   async triggerPaymentsFirstCycle() {
     const response: any = await this.getPaymentUserByCycle(1);
     const paymentUserData = response?.data?.data;
-    
+
     if (paymentUserData?.length == 0) {
       this.logger.log(
         '==== TRIGERRING CHARGES FOR USERS (1st Cycle): NO DATA =====',
@@ -102,13 +102,14 @@ export class AppService {
               },
             },
           })
-            .then((res) =>
+            .then(async (res) => {
+              await this.updatePaymentUser(element.attributes.mobile, 10, JSON.stringify(res?.data ? res.data : res) || "Internal Error");
               this.logger.log(
                 `USER (1st Cycle): ${element?.attributes?.mobile} |` +
                   JSON.stringify(res?.data),
                 AppService.name,
-              ),
-            )
+              );
+            })
             .catch(async (e) => {
               this.logger.error(
                 `USER (1st Cycle): ${element.attributes.mobile} |` +
@@ -116,7 +117,7 @@ export class AppService {
                 AppService.name,
               );
 
-              await this.updatePaymentUser(element?.attributes?.mobile, 2);
+              await this.updatePaymentUser(element?.attributes?.mobile, 2, JSON.stringify(e?.response?.data) || "Internal Error");
             });
         }
       }
@@ -190,13 +191,14 @@ export class AppService {
               },
             },
           })
-            .then((res) =>
+            .then(async (res) => {
+              await this.updatePaymentUser(element.attributes.mobile, 10, JSON.stringify(res?.data ? res.data : res) || "Internal Error");
               this.logger.log(
                 `USER (2nd Cycle): ${element.attributes.mobile} |` +
                   JSON.stringify(res?.data),
                 AppService.name,
-              ),
-            )
+              );
+            })
             .catch(async (e) => {
               this.logger.error(
                 `USER (2nd Cycle): ${element.attributes.mobile} |` +
@@ -204,7 +206,7 @@ export class AppService {
                 AppService.name,
               );
 
-              await this.updatePaymentUser(element.attributes.mobile, 3);
+              await this.updatePaymentUser(element.attributes.mobile, 3, JSON.stringify(e?.response?.data) || "Internal Error");
             });
         }
       }
@@ -277,13 +279,14 @@ export class AppService {
               },
             },
           })
-            .then((res) =>
+            .then(async (res) => {
+              await this.updatePaymentUser(element.attributes.mobile, 10, JSON.stringify(res?.data ? res.data : res) || "Internal Error");
               this.logger.log(
                 `USER: ${element.attributes.mobile} |` +
                   JSON.stringify(res?.data),
                 AppService.name,
-              ),
-            )
+              );
+            })
             .catch(async (e) => {
               this.logger.error(
                 `USER: ${element.attributes.mobile} |` +
@@ -291,7 +294,7 @@ export class AppService {
                 AppService.name,
               );
 
-              await this.updatePaymentUser(element.attributes.mobile, 4);
+              await this.updatePaymentUser(element.attributes.mobile, 4, JSON.stringify(e?.response?.data) || "Internal Error");
             });
         }
       }
@@ -355,7 +358,7 @@ export class AppService {
         headers: {
           'Content-Type': 'application/json',
           Accept: 'application/json',
-        }
+        },
       });
     } catch (e) {
       this.logger.error(JSON.stringify(e), AppService.name);
@@ -433,13 +436,14 @@ export class AppService {
                   },
                 },
               })
-                .then((res) =>
+                .then(async (res) => {
+                  await this.updatePaymentUser(element.attributes.mobile, 10, JSON.stringify(res?.data ? res.data : res) || "Internal Error");
                   this.logger.log(
                     `USER: ${element.attributes.mobile} |` +
                       JSON.stringify(res?.data),
                     AppService.name,
-                  ),
-                )
+                  );
+                })
                 .catch(async (e) => {
                   this.logger.error(
                     `USER: ${element.attributes.mobile} |` +
@@ -447,7 +451,7 @@ export class AppService {
                     AppService.name,
                   );
 
-                  await this.updatePaymentUser(element.attributes.mobile, 1);
+                  await this.updatePaymentUser(element.attributes.mobile, 1, JSON.stringify(e?.response?.data) || "Internal Error");
                   // if (
                   //   e?.response?.data?.fault?.code == 'POL0001' ||
                   //   e?.response?.data?.requestError?.policyException?.messageId ==
@@ -815,30 +819,26 @@ export class AppService {
     });
   }
 
-  async updatePaymentUser(msisdn: string, cycle: number) {
+  async updatePaymentUser(msisdn: string, cycle: number, log: string) {
     try {
-    await axios(
-      PAYMENT_USER_URL + '/update?mobile=' + msisdn + '&cycle=' + cycle,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Accept: 'application/json',
-        }
-      },
-    )
+      await axios(
+        PAYMENT_USER_URL + '/update?mobile=' + msisdn + '&cycle=' + cycle + '&log=' + log,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Accept: 'application/json',
+          },
+        },
+      );
 
-    this.logger.log(
-      '==== updatePaymentUser ====' + msisdn,
-      AppService.name,
-    );
-
-  } catch (e) {
-    this.logger.error(
-      '==== updatePaymentUser ====' + JSON.stringify(e),
-      AppService.name,
-    );
-  }
+      this.logger.log('==== updatePaymentUser ====' + msisdn, AppService.name);
+    } catch (e) {
+      this.logger.error(
+        '==== updatePaymentUser ====' + JSON.stringify(e),
+        AppService.name,
+      );
+    }
   }
 
   async subscribe(dto: UserSubscribeRequestDTO): Promise<any> {
