@@ -32,6 +32,7 @@ export const MSPACE_OTP_URL = process.env.MSPACE_OTP_URL
 export const MSPACE_OTP_VERIFY_URL = process.env.MSPACE_OTP_VERIFY_URL
 export const MSPACE_SUBSCRIBE_URL = process.env.MSPACE_SUBSCRIBE_URL
 export const MSPACE_PAYMENT_URL = process.env.MSPACE_PAYMENT_URL
+export const MSPACE_SMS_URL = process.env.MSPACE_SMS_URL
 
 export const getPaymentURL = (mobile: string) => {
     return `${process.env.IDEABIZ_PAYMENT_URL}tel:${mobileGenerator(mobile)}/transactions/amount`

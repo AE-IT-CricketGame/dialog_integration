@@ -16,6 +16,7 @@ import {
   MSPACE_OTP_URL,
   MSPACE_OTP_VERIFY_URL,
   MSPACE_PAYMENT_URL,
+  MSPACE_SMS_URL,
   MSPACE_SUBSCRIBE_URL,
   PAYMENT_USER_URL,
   SEND_SMS_URL,
@@ -103,7 +104,11 @@ export class AppService {
             },
           })
             .then(async (res) => {
-              await this.updatePaymentUser(element.attributes.mobile, 10, JSON.stringify(res?.data ? res.data : res) || "Internal Error");
+              await this.updatePaymentUser(
+                element.attributes.mobile,
+                10,
+                JSON.stringify(res?.data ? res.data : res) || 'Internal Error',
+              );
               this.logger.log(
                 `USER (1st Cycle): ${element?.attributes?.mobile} |` +
                   JSON.stringify(res?.data),
@@ -117,7 +122,11 @@ export class AppService {
                 AppService.name,
               );
 
-              await this.updatePaymentUser(element?.attributes?.mobile, 2, JSON.stringify(e?.response?.data) || "Internal Error");
+              await this.updatePaymentUser(
+                element?.attributes?.mobile,
+                2,
+                JSON.stringify(e?.response?.data) || 'Internal Error',
+              );
             });
         }
       }
@@ -192,7 +201,11 @@ export class AppService {
             },
           })
             .then(async (res) => {
-              await this.updatePaymentUser(element.attributes.mobile, 10, JSON.stringify(res?.data ? res.data : res) || "Internal Error");
+              await this.updatePaymentUser(
+                element.attributes.mobile,
+                10,
+                JSON.stringify(res?.data ? res.data : res) || 'Internal Error',
+              );
               this.logger.log(
                 `USER (2nd Cycle): ${element.attributes.mobile} |` +
                   JSON.stringify(res?.data),
@@ -206,7 +219,11 @@ export class AppService {
                 AppService.name,
               );
 
-              await this.updatePaymentUser(element.attributes.mobile, 3, JSON.stringify(e?.response?.data) || "Internal Error");
+              await this.updatePaymentUser(
+                element.attributes.mobile,
+                3,
+                JSON.stringify(e?.response?.data) || 'Internal Error',
+              );
             });
         }
       }
@@ -280,7 +297,11 @@ export class AppService {
             },
           })
             .then(async (res) => {
-              await this.updatePaymentUser(element.attributes.mobile, 10, JSON.stringify(res?.data ? res.data : res) || "Internal Error");
+              await this.updatePaymentUser(
+                element.attributes.mobile,
+                10,
+                JSON.stringify(res?.data ? res.data : res) || 'Internal Error',
+              );
               this.logger.log(
                 `USER: ${element.attributes.mobile} |` +
                   JSON.stringify(res?.data),
@@ -294,7 +315,11 @@ export class AppService {
                 AppService.name,
               );
 
-              await this.updatePaymentUser(element.attributes.mobile, 4, JSON.stringify(e?.response?.data) || "Internal Error");
+              await this.updatePaymentUser(
+                element.attributes.mobile,
+                4,
+                JSON.stringify(e?.response?.data) || 'Internal Error',
+              );
             });
         }
       }
@@ -365,7 +390,104 @@ export class AppService {
     }
   }
 
-  @Cron(CronExpression.EVERY_DAY_AT_6AM)
+  @Cron(CronExpression.EVERY_DAY_AT_6PM)
+  async triggerPaymentsInitialsCycle() {
+    const response: any = await this.getPaymentUserByCycle(0);
+    const paymentUserData = response?.data?.data;
+
+    if (paymentUserData?.length == 0) {
+      this.logger.log(
+        '==== TRIGERRING CHARGES FOR USERS (initial Cycle): NO DATA =====',
+        AppService.name,
+      );
+      return;
+    }
+
+    this.logger.log(
+      '==== TRIGERRING CHARGES FOR USERS (initial Cycle) =====',
+      AppService.name,
+    );
+    const delay = (ms: number) =>
+      new Promise((resolve) => setTimeout(resolve, ms));
+    const users = response.data.data;
+    const processUser = async (element) => {
+      if (element.attributes.mobile) {
+        if (
+          (await validateServiceProvider(element.attributes.mobile)) ==
+          SERVICE_PROVIDERS.DIALOG
+        ) {
+          await axios(getPaymentURL(element?.attributes?.mobile), {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Accept: 'application/json',
+              Authorization: AUTH_TOKEN,
+            },
+            data: {
+              amountTransaction: {
+                clientCorrelator: `${mobileGenerator(
+                  element.attributes.mobile,
+                )}-${Date.now()}`,
+                endUserId: `tel:${mobileGenerator(element.attributes.mobile)}`,
+                paymentAmount: {
+                  chargingInformation: {
+                    amount: CHARGE_AMOUNT,
+                    currency: 'LKR',
+                    description: `My CrickQ (cycle ${element?.attributes?.cycle}).`,
+                  },
+                  chargingMetaData: {
+                    onBehalfOf: 'My CrickQ',
+                    purchaseCategoryCode: 'Service',
+                    channel: 'WAP',
+                    taxAmount: '0',
+                    serviceID: SERVICE_ID,
+                  },
+                },
+                referenceCode: `REF-${Date.now()}`,
+                transactionOperationStatus: 'Charged',
+              },
+            },
+          })
+            .then(async (res) => {
+              await this.updatePaymentUser(
+                element.attributes.mobile,
+                10,
+                JSON.stringify(res?.data ? res.data : res) || 'Internal Error',
+              );
+              this.logger.log(
+                `USER (initial Cycle): ${element.attributes.mobile} |` +
+                  JSON.stringify(res?.data),
+                AppService.name,
+              );
+            })
+            .catch(async (e) => {
+              this.logger.error(
+                `USER (initial Cycle): ${element.attributes.mobile} |` +
+                  JSON.stringify(e?.response?.data),
+                AppService.name,
+              );
+
+              await this.updatePaymentUser(
+                element.attributes.mobile,
+                1,
+                JSON.stringify(e?.response?.data) || 'Internal Error',
+              );
+            });
+        }
+      }
+    };
+
+    const processUsersWithDelay = async () => {
+      for (const element of users) {
+        await processUser(element);
+        await delay(1000); // Adding a 1-second delay
+      }
+    };
+
+    processUsersWithDelay();
+  }
+
+  @Cron(CronExpression.EVERY_DAY_AT_NOON)
   async triggerPayments() {
     try {
       this.logger.log(
@@ -437,7 +559,12 @@ export class AppService {
                 },
               })
                 .then(async (res) => {
-                  await this.updatePaymentUser(element.attributes.mobile, 10, JSON.stringify(res?.data ? res.data : res) || "Internal Error");
+                  await this.updatePaymentUser(
+                    element.attributes.mobile,
+                    10,
+                    JSON.stringify(res?.data ? res.data : res) ||
+                      'Internal Error',
+                  );
                   this.logger.log(
                     `USER: ${element.attributes.mobile} |` +
                       JSON.stringify(res?.data),
@@ -451,7 +578,11 @@ export class AppService {
                     AppService.name,
                   );
 
-                  await this.updatePaymentUser(element.attributes.mobile, 1, JSON.stringify(e?.response?.data) || "Internal Error");
+                  await this.updatePaymentUser(
+                    element.attributes.mobile,
+                    1,
+                    JSON.stringify(e?.response?.data) || 'Internal Error',
+                  );
                   // if (
                   //   e?.response?.data?.fault?.code == 'POL0001' ||
                   //   e?.response?.data?.requestError?.policyException?.messageId ==
@@ -492,10 +623,11 @@ export class AppService {
     }
   }
 
-  @Cron(CronExpression.EVERY_DAY_AT_NOON)
+  @Cron(CronExpression.EVERY_MINUTE)
   async sendReminder() {
     const chunkSize = 10;
-    const chunks = [];
+    const dialogChunks = [];
+    const mobitelChunks = [];
     const delayBetweenRequests = 1000;
 
     try {
@@ -531,12 +663,45 @@ export class AppService {
           return element !== null;
         });
 
-        const formatedNumbers = nullCheckNumbers.map((msisdn: string) => {
-          return `tel:+${mobileGeneratorWithOutPlus(msisdn)}`;
-        });
+        const dialogNumbers = await Promise.all(
+          nullCheckNumbers.map(async (msisdn: string) => {
+            if (
+              (await validateServiceProvider(msisdn)) ===
+              SERVICE_PROVIDERS.DIALOG
+            ) {
+              return `tel:+${mobileGeneratorWithOutPlus(msisdn)}`;
+            }
+          }),
+        );
 
-        for (let i = 0; i < formatedNumbers.length; i += chunkSize) {
-          chunks.push(formatedNumbers.slice(i, i + chunkSize));
+        const mobitelNumbers = await Promise.all(
+          nullCheckNumbers.map(async (msisdn: string) => {
+            if (
+              (await validateServiceProvider(msisdn)) ===
+              SERVICE_PROVIDERS.MOBITEL
+            ) {
+              return `tel:+${mobileGeneratorWithOutPlus(msisdn)}`;
+            }
+          }),
+        );
+
+        // const formatedNumbers = nullCheckNumbers.map((msisdn: string) => {
+        //   return `tel:+${mobileGeneratorWithOutPlus(msisdn)}`;
+        // });
+
+        const filterUndefined = (arr) =>
+          arr.filter((item) => item !== undefined);
+
+        // Filter out undefined values from dialogNumbers and mobitelNumbers
+        const filteredDialogNumbers = filterUndefined(dialogNumbers);
+        const filteredMobitelNumbers = filterUndefined(mobitelNumbers);
+
+        for (let i = 0; i < filteredDialogNumbers.length; i += chunkSize) {
+          dialogChunks.push(filteredDialogNumbers.slice(i, i + chunkSize));
+        }
+
+        for (let i = 0; i < filteredMobitelNumbers.length; i += chunkSize) {
+          mobitelChunks.push(filteredMobitelNumbers.slice(i, i + chunkSize));
         }
 
         const sendSMSWithDelay = async (chunk) => {
@@ -556,6 +721,8 @@ export class AppService {
             },
           };
 
+          console.log(requestBody);
+
           const response = await axios.post(IDEABIZ_SMS_URL, requestBody, {
             headers: {
               'Content-Type': 'application/json',
@@ -565,12 +732,52 @@ export class AppService {
           });
 
           // Process the response if needed
-          console.log('SMS sent successfully:', response.data);
+          this.logger.log(
+            `SMS Dialog sent successfully: ${response.data} |`,
+            AppService.name,
+          );
+        };
+
+        const sendSMSWithDelayMobitel = async (chunk) => {
+          const requestBody = {
+            version: '1.0',
+            applicationId: MSPACE_APPID,
+            password: 'eea1ebf64d8eca14380a0da39aba9f8b',
+            message: reminderMessage,
+            destinationAddresses: chunk,
+            sourceAddress: '77000',
+            deliveryStatusRequest: '1',
+            encoding: '245',
+            binaryHeader:
+              '526574697265206170706c69636174696f6e20616e642072656c6561736520524b7320696620666f756e642065787069726564',
+          };
+
+          const response = await axios(MSPACE_SMS_URL, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Accept: 'application/json',
+            },
+            data: requestBody,
+          });
+
+          // Process the response if needed
+          this.logger.log(
+            `SMS Mobitel sent successfully: ${response.data} |`,
+            AppService.name,
+          );
         };
 
         const sendSMSRequests = async () => {
-          for (const chunk of chunks) {
+          for (const chunk of dialogChunks) {
             await sendSMSWithDelay(chunk);
+            await new Promise((resolve) =>
+              setTimeout(resolve, delayBetweenRequests),
+            );
+          }
+
+          for (const chunk of mobitelChunks) {
+            await sendSMSWithDelayMobitel(chunk);
             await new Promise((resolve) =>
               setTimeout(resolve, delayBetweenRequests),
             );
@@ -581,7 +788,7 @@ export class AppService {
         sendSMSRequests();
       }
     } catch (error) {
-      console.log(error?.response?.data);
+      console.log(error);
     }
   }
 
@@ -789,6 +996,21 @@ export class AppService {
     });
   }
 
+  async getPaymentUsers() {
+    return await axios(PAYMENT_USER_URL, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      },
+    }).catch(async (e) => {
+      this.logger.error(
+        '==== getPaymentUsers ====' + JSON.stringify(e),
+        AppService.name,
+      );
+    });
+  }
+
   async getPaymentUser(msisdn: string) {
     return await axios(PAYMENT_USER_URL + '?filters[mobile][$eq]=' + msisdn, {
       method: 'GET',
@@ -822,7 +1044,13 @@ export class AppService {
   async updatePaymentUser(msisdn: string, cycle: number, log: string) {
     try {
       await axios(
-        PAYMENT_USER_URL + '/update?mobile=' + msisdn + '&cycle=' + cycle + '&log=' + log,
+        PAYMENT_USER_URL +
+          '/update?mobile=' +
+          msisdn +
+          '&cycle=' +
+          cycle +
+          '&log=' +
+          log,
         {
           method: 'POST',
           headers: {
