@@ -107,6 +107,18 @@ export class AppController {
     );
   }
 
+  @Post('/clear-payment')
+  async clearPayments(): Promise<ResponseDTO> {
+    const response = await this.appService.clearCycles();
+
+    return new ResponseDTO(
+      HttpStatus.OK,
+      'Success',
+      `Payment Cleared Successfully`,
+      null,
+    );
+  }
+
   @Get('/test')
   async testAPI(): Promise<void> {
     this.logger.log('ALL USERS FROM DB', AppController.name);
