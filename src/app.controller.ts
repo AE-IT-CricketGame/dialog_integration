@@ -8,16 +8,18 @@ import { MyLogger } from './logger/logger.service';
 
 @Controller('config')
 export class AppController {
-  constructor(private readonly appService: AppService, private readonly logger: MyLogger) {}
+  constructor(
+    private readonly appService: AppService,
+    private readonly logger: MyLogger,
+  ) {}
 
   @Post('/otp')
   async sendOTP(@Body() OTPRequestDTO: OTPRequestDTO): Promise<ResponseDTO> {
-   const response = await this.appService.sendOTP(OTPRequestDTO);
+    const response = await this.appService.sendOTP(OTPRequestDTO);
 
-   
     return new ResponseDTO(
       HttpStatus.OK,
-      "Success",
+      'Success',
       `OTP sent Successfully`,
       response.data ? response.data : response,
     );
@@ -25,74 +27,92 @@ export class AppController {
 
   @Post('/subscribe-otp')
   async subscribeOTP(@Body() mobileDTO: MobileDTO): Promise<ResponseDTO> {
-   const response = await this.appService.subscribeOTP(mobileDTO);
+    const response = await this.appService.subscribeOTP(mobileDTO);
 
-   
     return new ResponseDTO(
       HttpStatus.OK,
-      "Success",
+      'Success',
       `OTP sent Successfully`,
       response.data ? response.data : response,
     );
   }
 
-  
   @Post('/validate-otp')
-  async validateOTP(@Body() OTPRequestDTO: OTPRequestDTO): Promise<ResponseDTO> {
-   const response = await this.appService.validateOTP(OTPRequestDTO);
+  async validateOTP(
+    @Body() OTPRequestDTO: OTPRequestDTO,
+  ): Promise<ResponseDTO> {
+    const response = await this.appService.validateOTP(OTPRequestDTO);
 
-   
     return new ResponseDTO(
       HttpStatus.OK,
-      "Success",
+      'Success',
       `OTP validated Successfully`,
       response.data ? response.data : response,
     );
   }
 
-
   @Post('/subscribe')
-  async subscribeUser(@Body() userSubscribeRequestDTO: UserSubscribeRequestDTO): Promise<ResponseDTO> {
-   const response = await this.appService.subscribe(userSubscribeRequestDTO);
+  async subscribeUser(
+    @Body() userSubscribeRequestDTO: UserSubscribeRequestDTO,
+  ): Promise<ResponseDTO> {
+    const response = await this.appService.subscribe(userSubscribeRequestDTO);
 
-   
     return new ResponseDTO(
       HttpStatus.OK,
-      "Success",
+      'Success',
       `User subscribe Successfully`,
       response.data ? response.data : response,
     );
   }
 
   @Post('/unsubscribe')
-  async unsubscribeUser(@Body() userSubscribeRequestDTO: UserSubscribeRequestDTO): Promise<ResponseDTO> {
-   const response = await this.appService.unsubscribe(userSubscribeRequestDTO);
+  async unsubscribeUser(
+    @Body() userSubscribeRequestDTO: UserSubscribeRequestDTO,
+  ): Promise<ResponseDTO> {
+    const response = await this.appService.unsubscribe(userSubscribeRequestDTO);
 
-   
     return new ResponseDTO(
       HttpStatus.OK,
-      "Success",
+      'Success',
       `User unsubscribe from campaign Successfully`,
       response.data ? response.data : response,
     );
   }
 
   @Post('/unsubscribe-app')
-  async unsubscribeUserApp(@Body() userSubscribeRequestDTO: MobileDTO): Promise<ResponseDTO> {
-   const response = await this.appService.unsubscribeFullUser(userSubscribeRequestDTO);
+  async unsubscribeUserApp(
+    @Body() userSubscribeRequestDTO: MobileDTO,
+  ): Promise<ResponseDTO> {
+    const response = await this.appService.unsubscribeFullUser(
+      userSubscribeRequestDTO,
+    );
 
-   
     return new ResponseDTO(
       HttpStatus.OK,
-      "Success",
+      'Success',
       `User unsubscribe Successfully`,
       response.data ? response.data : response,
     );
   }
 
+  @Post('/initiate-payment')
+  async initiatePayment(): Promise<ResponseDTO> {
+    const response = await this.appService.triggerPaymentsInitialsCycle();
+
+    return new ResponseDTO(
+      HttpStatus.OK,
+      'Success',
+      `Payment Initiated Successfully`,
+      null,
+    );
+  }
+
   @Get('/test')
   async testAPI(): Promise<void> {
-    this.logger.log("ALL USERS FROM DB", AppController.name)
-    this.logger.log(JSON.stringify({test: "test", test2: ['test']}), AppController.name)
+    this.logger.log('ALL USERS FROM DB', AppController.name);
+    this.logger.log(
+      JSON.stringify({ test: 'test', test2: ['test'] }),
+      AppController.name,
+    );
   }
 }

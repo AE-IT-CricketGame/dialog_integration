@@ -390,7 +390,7 @@ export class AppService {
     }
   }
 
-  @Cron(CronExpression.EVERY_DAY_AT_6PM)
+  @Cron(CronExpression.EVERY_DAY_AT_6AM)
   async triggerPaymentsInitialsCycle() {
     const response: any = await this.getPaymentUserByCycle(0);
     const paymentUserData = response?.data?.data;
