@@ -35,4 +35,19 @@ export const generateStringHash = (length: number) => {
   return randomString;
 };
 
+export const validateServiceProvider = async (msisdn: string) => {
+  console.log(msisdn)
+    const firstThreeDigits = msisdn.slice(0, 3);
+    const firstFourDigits = msisdn.slice(0, 4);
+
+    if (firstThreeDigits === "071" || firstThreeDigits === "070" || firstFourDigits === "9471" || firstFourDigits === "9470") {
+      return SERVICE_PROVIDERS.MOBITEL;
+    } else if (firstThreeDigits === "077" || firstThreeDigits === "076" || firstFourDigits === "9477" || firstFourDigits === "9476" || firstFourDigits === "9474" || firstThreeDigits === "074") {
+      return SERVICE_PROVIDERS.DIALOG;
+    } else {
+        return "Other"
+    }
+
+};
+
 
