@@ -1,14 +1,16 @@
-import { IsNotEmpty, IsString } from 'class-validator';
+import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
 export class OTPRequestDTO {
 
-  @IsString()
   @IsNotEmpty()
-  message: string;
+  otp: any;
+
+  @IsOptional()
+  mobile: string;
 
   @IsString()
   @IsNotEmpty()
-  mobile: string;
+  serverRef: string;
 
 }
 
