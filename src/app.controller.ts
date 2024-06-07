@@ -119,6 +119,18 @@ export class AppController {
     );
   }
 
+  @Post('/callback')
+  async callBackAPI(@Body() data: any): Promise<ResponseDTO> {
+    console.log(data);
+
+    return new ResponseDTO(
+      HttpStatus.OK,
+      'Success',
+      `callback Successfully`,
+      null,
+    );
+  }
+
   @Get('/test')
   async testAPI(): Promise<void> {
     this.logger.log('ALL USERS FROM DB', AppController.name);
