@@ -8,6 +8,9 @@ import {
   DELETE_USER_DATA_FROM_ALL,
   GET_REMINDER_MSG,
   GET_USER_DATA,
+  HUTCH_BUNDLE_ID,
+  HUTCH_OTP_URL,
+  HUTCH_OTP_VERIFY_URL,
   IDEABIZ_SMS_URL,
   IDEABIZ_SUBSCRIBE_OTP_URL,
   IDEABIZ_VALIDATE_OTP_URL,
@@ -39,10 +42,14 @@ import {
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { MobileDTO } from './dto/mobile.request.dto';
 import { MyLogger } from './logger/logger.service';
+import { HutchService } from './hutch/hutch.service';
 
 @Injectable()
 export class AppService {
-  constructor(private readonly logger: MyLogger) {}
+  constructor(
+    private readonly logger: MyLogger,
+    private hutchService: HutchService,
+  ) {}
 
   @Cron(CronExpression.EVERY_DAY_AT_NOON)
   async triggerPaymentsFirstCycle() {
@@ -832,6 +839,15 @@ export class AppService {
         });
 
         return response;
+      } else if ((await validateServiceProvider(dto.mobile)) == 'hutch') {
+        this.logger.log(
+          '==== SUBSCRIBE OTP HUTCH ENDPOINT CALLED ====',
+          AppService.name,
+        );
+
+        const response = await this.hutchService.sendOTP(dto.mobile);
+
+        return response;
       } else if ((await validateServiceProvider(dto.mobile)) == 'mobitel') {
         this.logger.log(
           '==== SUBSCRIBE OTP MOBITEL ENDPOINT CALLED ====',
@@ -895,11 +911,15 @@ export class AppService {
 
   async validateOTP(dto: OTPRequestDTO): Promise<any> {
     this.logger.log(
-      '==== OTPRequestDTO ====' + JSON.stringify(dto),
+      '==== OTPValidateDTO ====' + JSON.stringify(dto),
       AppService.name,
     );
     try {
       if ((await validateServiceProvider(dto.mobile)) == 'dialog') {
+        this.logger.log(
+          '==== VERIFY DIALOG ENDPOINT CALLED ====',
+          AppService.name,
+        );
         const response = await axios(IDEABIZ_VALIDATE_OTP_URL, {
           method: 'POST',
           headers: {
@@ -926,6 +946,37 @@ export class AppService {
           );
         }
 
+        this.logger.log(
+          '==== VERIFY DIALOG ====' + JSON.stringify(response.data),
+          AppService.name,
+        );
+
+        return response;
+      } else if ((await validateServiceProvider(dto.mobile)) == 'hutch') {
+        this.logger.log(
+          '==== VERIFY HUTCH ENDPOINT CALLED ====',
+          AppService.name,
+        );
+
+        const response = await this.hutchService.verifyOTPAndRegister(
+          dto.mobile,
+          dto.otp,
+        );
+
+        
+
+        await this.createPaymentUser(
+          dto.mobile,
+          response.data?.data?.subscription_id,
+          SERVICE_PROVIDERS.HUTCH,
+        );
+
+
+
+        this.logger.log(
+          '==== VERIFY HUTCH ====' + JSON.stringify(response.data),
+          AppService.name,
+        );
         return response;
       } else if (
         (await validateServiceProvider(dto.mobile)) == SERVICE_PROVIDERS.MOBITEL
@@ -965,7 +1016,7 @@ export class AppService {
       }
     } catch (e) {
       this.logger.error(
-        '==== VERIFY OTP MOBITEL ====' + JSON.stringify(e),
+        '==== VERIFY OTP ERROR ====' + JSON.stringify(e),
         AppService.name,
       );
       throw e;
@@ -984,7 +1035,7 @@ export class AppService {
           mobile: msisdn,
           service_provider: provider,
           cycle: 0,
-          serverRef: serverRef,
+          serverRef: serverRef?.toString(),
           ipdated: new Date(),
         },
       },
@@ -1214,6 +1265,19 @@ export class AppService {
         });
 
         console.log(response.data);
+
+        await axios(PAYMENT_USER_URL + '/delete/' + dto.mobile, {
+          method: 'POST',
+        });
+
+        await axios(DELETE_USER_DATA_FROM_ALL + dto.mobile, {
+          method: 'POST',
+        });
+      } else if (
+        (await validateServiceProvider(dto.mobile)) == SERVICE_PROVIDERS.HUTCH
+      ) {
+        console.log(`tel:${mobileGeneratorWithOutPlus(dto.mobile)}`);
+        await this.hutchService.removeUser(dto.mobile);
 
         await axios(PAYMENT_USER_URL + '/delete/' + dto.mobile, {
           method: 'POST',

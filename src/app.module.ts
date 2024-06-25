@@ -4,6 +4,7 @@ import { AppService } from './app.service';
 import { ScheduleModule } from '@nestjs/schedule';
 import { ConfigModule } from '@nestjs/config';
 import { MyLogger } from './logger/logger.service';
+import { HutchService } from './hutch/hutch.service';
 @Module({
   imports: [
     ScheduleModule.forRoot(),
@@ -12,6 +13,6 @@ import { MyLogger } from './logger/logger.service';
     }),
   ],
   controllers: [AppController],
-  providers: [MyLogger, AppService],
+  providers: [HutchService, MyLogger, AppService],
 })
 export class AppModule {}
