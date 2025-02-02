@@ -21,6 +21,7 @@ export const SEND_SMS_URL =
   SMS_CREDENTIALS.FROM;
 export const DELETE_USER_DATA = MAIN_API + 'leaderboards/';
 export const DELETE_USER_DATA_FROM_ALL = MAIN_API + 'question/delete/';
+export const DELETE_FRIMI_USER = MAIN_API + 'frimi-player/unsubscribe/';
 export const GET_USER_DATA = MAIN_API + 'leaderboards?populate=campaign';
 export const GET_REMINDER_MSG = MAIN_API + 'sms-templates';
 export const SUBSCRIBE_USER_URL = process.env.IDEABIZ_SUBSCRIBE_USER_URL;
