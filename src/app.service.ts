@@ -1215,6 +1215,11 @@ export class AppService {
   async unsubscribeFullUser(dto: MobileDTO): Promise<any> {
     try {
       console.log(dto);
+      if (dto.tag?.toLowerCase() == 'frimi') {
+        await axios(DELETE_FRIMI_USER + dto.mobile, {
+          method: 'POST',
+        });
+      }
       if (
         (await validateServiceProvider(dto.mobile)) == SERVICE_PROVIDERS.DIALOG
       ) {
@@ -1284,10 +1289,6 @@ export class AppService {
           method: 'POST',
         });
       }
-
-      await axios(DELETE_FRIMI_USER + dto.mobile, {
-        method: 'POST',
-      });
     } catch (e) {
       console.log(e.response);
       if (e.response?.data.message) {
